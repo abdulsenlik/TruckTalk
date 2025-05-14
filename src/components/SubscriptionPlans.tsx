@@ -2,7 +2,6 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
