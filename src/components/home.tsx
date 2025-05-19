@@ -20,74 +20,37 @@ import LanguageSelector, { useLanguage } from "./LanguageSelector";
 import UserAuthButton from "./UserAuthButton";
 import SubscriptionPlans from "./SubscriptionPlans";
 
-const modules = [
-  {
-    id: 1,
-    title: "Basic Greetings & ID Check",
-    description:
-      "Learn essential phrases for introducing yourself and handling ID verification during traffic stops.",
-    dialogues: 6,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80",
-    difficulty: "Beginner",
-  },
-  {
-    id: 2,
-    title: "Road Signs & Traffic Rules",
-    description:
-      "Understand common road signs, traffic rules, and how to explain your actions to officers.",
-    dialogues: 8,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1564694457547-80311e2e653a?w=600&q=80",
-    difficulty: "Beginner",
-  },
-  {
-    id: 3,
-    title: "Dealing with Police/DOT Officers",
-    description:
-      "Learn how to communicate effectively with law enforcement and DOT officials during inspections.",
-    dialogues: 10,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80",
-    difficulty: "Intermediate",
-  },
-  {
-    id: 4,
-    title: "Emergency and Accident Situations",
-    description:
-      "Essential vocabulary and phrases for handling roadside emergencies and accidents.",
-    dialogues: 7,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&q=80",
-    difficulty: "Intermediate",
-  },
-  {
-    id: 5,
-    title: "Border Crossing and Inspection",
-    description:
-      "Communication skills for border crossings, customs, and international transport documentation.",
-    dialogues: 9,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1631248055158-edec7a3c072b?w=600&q=80",
-    difficulty: "Advanced",
-  },
-  {
-    id: 6,
-    title: "Vehicle Maintenance Vocabulary",
-    description:
-      "Learn terms related to truck parts, maintenance issues, and repair conversations.",
-    dialogues: 8,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1599256872237-5dcc0fbe9668?w=600&q=80",
-    difficulty: "Advanced",
-  },
-];
+import { trafficStopCourse } from "@/data/trafficStopCourse";
+
+const modules = trafficStopCourse.map((section, index) => ({
+  id: section.id,
+  title: section.title,
+  description: section.description,
+  dialogues: section.dialogues.length,
+  completion: 0,
+  image: getImageForSection(section.id),
+  difficulty: index < 2 ? "Beginner" : index < 4 ? "Intermediate" : "Advanced",
+}));
+
+// Helper function to get appropriate image for each section
+function getImageForSection(sectionId: string): string {
+  switch (sectionId) {
+    case "initial-stop":
+      return "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=600&q=80";
+    case "document-check":
+      return "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80";
+    case "vehicle-inspection":
+      return "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=80";
+    case "explaining-situations":
+      return "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80";
+    case "citations-and-tickets":
+      return "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=600&q=80";
+    case "emergency-situations":
+      return "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=600&q=80";
+    default:
+      return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=600&q=80";
+  }
+}
 
 const emergencyPhrases = [
   {
@@ -265,7 +228,10 @@ const Home = () => {
                 completion={module.completion}
                 image={module.image}
                 difficulty={module.difficulty}
-                onClick={() => navigate(`/module/${module.id}`)}
+                onClick={() => {
+                  console.log("Navigating to module:", module.id);
+                  navigate(`/module/${module.id}`);
+                }}
               />
             ))}
           </div>

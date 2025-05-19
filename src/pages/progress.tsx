@@ -41,62 +41,38 @@ interface UserStats {
   nextLevelXp: number;
 }
 
-const moduleProgress: ModuleProgress[] = [
-  {
-    id: 1,
-    title: "Basic Greetings & ID Check",
-    totalDialogues: 6,
-    completedDialogues: 3,
-    lastAccessed: "2023-05-12T14:30:00",
-    image:
-      "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=600&q=80",
-  },
-  {
-    id: 2,
-    title: "Road Signs & Traffic Rules",
-    totalDialogues: 8,
-    completedDialogues: 2,
-    lastAccessed: "2023-05-10T09:15:00",
-    image:
-      "https://images.unsplash.com/photo-1566143260825-4ceeaed58d26?w=600&q=80",
-  },
-  {
-    id: 3,
-    title: "Dealing with Police/DOT Officers",
-    totalDialogues: 10,
-    completedDialogues: 0,
-    lastAccessed: "",
-    image:
-      "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=600&q=80",
-  },
-  {
-    id: 4,
-    title: "Emergency and Accident Situations",
-    totalDialogues: 7,
-    completedDialogues: 0,
-    lastAccessed: "",
-    image:
-      "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=600&q=80",
-  },
-  {
-    id: 5,
-    title: "Border Crossing and Inspection",
-    totalDialogues: 9,
-    completedDialogues: 0,
-    lastAccessed: "",
-    image:
-      "https://images.unsplash.com/photo-1473445730015-841f29a9490b?w=600&q=80",
-  },
-  {
-    id: 6,
-    title: "Vehicle Maintenance Vocabulary",
-    totalDialogues: 8,
-    completedDialogues: 0,
-    lastAccessed: "",
-    image:
-      "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=80",
-  },
-];
+import { trafficStopCourse } from "@/data/trafficStopCourse";
+
+const moduleProgress: ModuleProgress[] = trafficStopCourse.map(
+  (section, index) => ({
+    id: index + 1,
+    title: section.title,
+    totalDialogues: section.dialogues.length,
+    completedDialogues: index === 0 ? 1 : 0,
+    lastAccessed: index === 0 ? new Date().toISOString() : "",
+    image: getImageForSection(section.id),
+  }),
+);
+
+// Helper function to get appropriate image for each section
+function getImageForSection(sectionId: string): string {
+  switch (sectionId) {
+    case "initial-stop":
+      return "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=600&q=80";
+    case "document-check":
+      return "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80";
+    case "vehicle-inspection":
+      return "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=80";
+    case "explaining-situations":
+      return "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80";
+    case "citations-and-tickets":
+      return "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=600&q=80";
+    case "emergency-situations":
+      return "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=600&q=80";
+    default:
+      return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=600&q=80";
+  }
+}
 
 const achievements = [
   {

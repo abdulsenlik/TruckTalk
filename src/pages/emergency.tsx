@@ -184,6 +184,10 @@ const EmergencyPage = () => {
   const [selectedLanguage, setSelectedLanguage] = useState("tr");
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>(
+    {},
+  );
+  const [phraseImages, setPhraseImages] = useState<Record<number, string>>({});
 
   const filteredPhrases = emergencyPhrases.filter((phrase) => {
     const matchesSearch = phrase.phrase
@@ -200,6 +204,36 @@ const EmergencyPage = () => {
     utterance.lang = "en-US";
     utterance.rate = 0.9; // Slightly slower for clarity
     window.speechSynthesis.speak(utterance);
+  };
+
+  const generateImage = async (phrase: EmergencyPhrase) => {
+    if (phraseImages[phrase.id]) return; // Skip if image already exists
+
+    try {
+      setLoadingImages((prev) => ({ ...prev, [phrase.id]: true }));
+
+      const { supabase } = await import("@/lib/supabase");
+
+      const { data, error } = await supabase.functions.invoke(
+        "supabase-functions-generate-image",
+        {
+          body: {
+            prompt: phrase.phrase,
+            language: selectedLanguage,
+          },
+        },
+      );
+
+      if (error) throw error;
+
+      if (data?.imageUrl) {
+        setPhraseImages((prev) => ({ ...prev, [phrase.id]: data.imageUrl }));
+      }
+    } catch (error) {
+      console.error("Error generating image:", error);
+    } finally {
+      setLoadingImages((prev) => ({ ...prev, [phrase.id]: false }));
+    }
   };
 
   return (
@@ -286,26 +320,77 @@ const EmergencyPage = () => {
                   className="hover:shadow-md transition-shadow"
                 >
                   <CardContent className="p-4">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                      <div>
-                        <p className="font-medium text-lg">{phrase.phrase}</p>
-                        <p className="text-muted-foreground">
-                          {
-                            phrase.translation[
-                              selectedLanguage as keyof typeof phrase.translation
-                            ]
-                          }
-                        </p>
+                    <div className="flex flex-col gap-4">
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                        <div>
+                          <p className="font-medium text-lg">{phrase.phrase}</p>
+                          <p className="text-muted-foreground">
+                            {
+                              phrase.translation[
+                                selectedLanguage as keyof typeof phrase.translation
+                              ]
+                            }
+                          </p>
+                        </div>
+                        <div className="flex space-x-2 self-end md:self-center">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => playAudio(phrase)}
+                          >
+                            <Volume2 className="h-5 w-5" />
+                            <span className="sr-only">Play audio</span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => generateImage(phrase)}
+                            disabled={loadingImages[phrase.id]}
+                          >
+                            {loadingImages[phrase.id] ? (
+                              <>
+                                <svg
+                                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                >
+                                  <circle
+                                    className="opacity-25"
+                                    cx="12"
+                                    cy="12"
+                                    r="10"
+                                    stroke="currentColor"
+                                    strokeWidth="4"
+                                  ></circle>
+                                  <path
+                                    className="opacity-75"
+                                    fill="currentColor"
+                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                  ></path>
+                                </svg>
+                                Generating
+                              </>
+                            ) : phraseImages[phrase.id] ? (
+                              <>View Image</>
+                            ) : (
+                              <>Generate Image</>
+                            )}
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => playAudio(phrase)}
-                        className="self-end md:self-center"
-                      >
-                        <Volume2 className="h-5 w-5" />
-                        <span className="sr-only">Play audio</span>
-                      </Button>
+
+                      {phraseImages[phrase.id] && (
+                        <div className="mt-2">
+                          <div className="relative rounded-md overflow-hidden aspect-video">
+                            <img
+                              src={phraseImages[phrase.id]}
+                              alt={phrase.phrase}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
