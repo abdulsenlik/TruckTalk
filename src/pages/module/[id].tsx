@@ -81,6 +81,7 @@ const ModuleDetailPage = () => {
   );
   const [activeTab, setActiveTab] = useState("dialogues");
   const [selectedLanguage, setSelectedLanguage] = useState("tr");
+  const [audioLoading, setAudioLoading] = useState({});
 
   // Use the traffic stop course data
 
@@ -188,6 +189,20 @@ const ModuleDetailPage = () => {
 
   const handleBackToList = () => {
     setSelectedDialogue(null);
+  };
+
+  const playVocabularyAudio = (word: string) => {
+    setAudioLoading((prev) => ({ ...prev, [word]: true }));
+    // Use Web Speech API for text-to-speech
+    const utterance = new SpeechSynthesisUtterance(word);
+    utterance.lang = "en-US";
+    utterance.rate = 0.9; // Slightly slower for clarity
+    window.speechSynthesis.speak(utterance);
+
+    // Set loading to false after a short delay to simulate API call
+    setTimeout(() => {
+      setAudioLoading((prev) => ({ ...prev, [word]: false }));
+    }, 1000);
   };
 
   return (
@@ -617,16 +632,16 @@ const ModuleDetailPage = () => {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => {
-                                        const utterance =
-                                          new SpeechSynthesisUtterance(
-                                            item.english,
-                                          );
-                                        utterance.lang = "en-US";
-                                        window.speechSynthesis.speak(utterance);
-                                      }}
+                                      onClick={() =>
+                                        playVocabularyAudio(item.english)
+                                      }
+                                      disabled={audioLoading[item.english]}
                                     >
-                                      <Volume2 className="h-4 w-4" />
+                                      {audioLoading[item.english] ? (
+                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></span>
+                                      ) : (
+                                        <Volume2 className="h-4 w-4" />
+                                      )}
                                       <span className="sr-only">
                                         Play audio
                                       </span>

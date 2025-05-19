@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { supabase } from "@/lib/supabase";
 import {
   Play,
   Pause,
@@ -120,6 +121,7 @@ const DialoguePlayer = ({
     Record<number, string>
   >({});
   const [showResults, setShowResults] = useState(false);
+  const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
 
   // Audio reference
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -191,20 +193,98 @@ const DialoguePlayer = ({
     setCurrentTime(newTime);
   };
 
-  const playLineAudio = (text: string) => {
-    // Use Web Speech API for text-to-speech
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9; // Slightly slower for clarity
-    window.speechSynthesis.speak(utterance);
+  const playLineAudio = async (text: string) => {
+    try {
+      console.log(
+        "Calling text-to-speech function for line:",
+        text.substring(0, 30) + "...",
+      );
+      // Call the Supabase Edge Function for text-to-speech
+      const { data, error } = await supabase.functions.invoke(
+        "supabase-functions-text-to-speech",
+        {
+          body: {
+            text: text,
+            language: "en-US",
+            speed: 0.9,
+          },
+        },
+      );
+
+      if (error) {
+        console.error("Supabase function error:", error);
+        throw error;
+      }
+
+      console.log("TTS response:", data);
+
+      if (data?.data?.audioUrl) {
+        // Play the audio from the returned URL
+        const audio = new Audio(data.data.audioUrl);
+        await audio.play();
+        console.log("Playing audio from URL");
+      } else {
+        console.log("No audio URL returned, falling back to Web Speech API");
+        // Fallback to Web Speech API if no audio URL is returned
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = "en-US";
+        utterance.rate = 0.9; // Slightly slower for clarity
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (error) {
+      console.error("Error playing audio:", error);
+      // Fallback to Web Speech API
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    }
   };
 
-  const playVocabularyAudio = (word: string) => {
-    // Use Web Speech API for text-to-speech
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9; // Slightly slower for clarity
-    window.speechSynthesis.speak(utterance);
+  const playVocabularyAudio = async (word: string) => {
+    setAudioLoading((prev) => ({ ...prev, [word]: true }));
+
+    try {
+      // Call the Supabase Edge Function for text-to-speech
+      const { data, error } = await supabase.functions.invoke(
+        "supabase-functions-text-to-speech",
+        {
+          body: {
+            text: word,
+            language: "en-US",
+            speed: 0.9,
+          },
+        },
+      );
+
+      if (error) {
+        throw error;
+      }
+
+      if (data?.data?.audioUrl) {
+        // Play the audio from the returned URL
+        const audio = new Audio(data.data.audioUrl);
+        audio.play();
+      } else {
+        // Fallback to Web Speech API if no audio URL is returned
+        const utterance = new SpeechSynthesisUtterance(word);
+        utterance.lang = "en-US";
+        utterance.rate = 0.9; // Slightly slower for clarity
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (error) {
+      console.error("Error playing audio:", error);
+      // Fallback to Web Speech API
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = "en-US";
+      utterance.rate = 0.9;
+      window.speechSynthesis.speak(utterance);
+    } finally {
+      // Set loading to false after processing
+      setTimeout(() => {
+        setAudioLoading((prev) => ({ ...prev, [word]: false }));
+      }, 1000);
+    }
   };
 
   const toggleRecording = () => {
@@ -393,8 +473,13 @@ const DialoguePlayer = ({
                           size="sm"
                           className="h-6 w-6 p-0"
                           onClick={() => playVocabularyAudio(item.word)}
+                          disabled={audioLoading[item.word]}
                         >
-                          <Volume2 className="h-3 w-3" />
+                          {audioLoading && audioLoading[item.word] ? (
+                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                          ) : (
+                            <Volume2 className="h-3 w-3" />
+                          )}
                         </Button>
                       </div>
                       <span className="text-sm text-blue-600">
