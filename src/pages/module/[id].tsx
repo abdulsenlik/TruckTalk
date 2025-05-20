@@ -9,6 +9,7 @@ import {
   Volume2,
   AlertCircle,
   BookOpen,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -16,6 +17,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import DialoguePlayer from "@/components/DialoguePlayer";
+import RoleplayDialogue from "@/components/RoleplayDialogue";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -81,7 +83,8 @@ const ModuleDetailPage = () => {
   );
   const [activeTab, setActiveTab] = useState("dialogues");
   const [selectedLanguage, setSelectedLanguage] = useState("tr");
-  const [audioLoading, setAudioLoading] = useState({});
+  const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
+  const [ttsLoading, setTtsLoading] = useState<Record<string, boolean>>({});
 
   // Use the traffic stop course data
 
@@ -191,18 +194,74 @@ const ModuleDetailPage = () => {
     setSelectedDialogue(null);
   };
 
-  const playVocabularyAudio = (word: string) => {
+  const playVocabularyAudio = async (word: string) => {
     setAudioLoading((prev) => ({ ...prev, [word]: true }));
-    // Use Web Speech API for text-to-speech
-    const utterance = new SpeechSynthesisUtterance(word);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9; // Slightly slower for clarity
-    window.speechSynthesis.speak(utterance);
 
-    // Set loading to false after a short delay to simulate API call
-    setTimeout(() => {
-      setAudioLoading((prev) => ({ ...prev, [word]: false }));
-    }, 1000);
+    try {
+      console.log("[Module] Playing vocabulary audio for word:", word);
+
+      const response = await fetch(
+        "https://pvstwthufbertinmojuk.functions.supabase.co/supabase-functions-text-to-speech",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text: word }),
+        },
+      );
+
+      console.log(
+        "[Module] Response status:",
+        response.status,
+        response.statusText,
+      );
+
+      if (!response.ok) {
+        throw new Error(`TTS API error: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log("[Module] Full API response:", data);
+
+      // Check for different possible paths to the audio URL
+      const audioUrl = data?.audioUrl || data?.data?.audioUrl || data?.url;
+      console.log("[Module] Extracted audioUrl:", audioUrl);
+
+      if (!audioUrl) {
+        console.error(
+          "[Module] No audioUrl found in response. Full response:",
+          data,
+        );
+        throw new Error("No audioUrl returned from TTS API");
+      }
+
+      console.log("[Module] Creating Audio object with URL:", audioUrl);
+      const audio = new Audio(audioUrl);
+
+      console.log("[Module] Attempting to play audio...");
+      await audio.play();
+      console.log("[Module] Audio playback started successfully");
+    } catch (err) {
+      console.error("[Module] Error playing vocabulary audio:", err);
+    } finally {
+      // Set loading to false after processing
+      setTimeout(() => {
+        setAudioLoading((prev) => ({ ...prev, [word]: false }));
+      }, 500);
+    }
+  };
+
+  const playLineAudio = async (text: string) => {
+    try {
+      console.log(
+        "[Module] Playing line audio:",
+        text.substring(0, 30) + "...",
+      );
+      await playVocabularyAudio(text);
+    } catch (error) {
+      console.error("[Module] Error playing line audio:", error);
+    }
   };
 
   return (
@@ -289,11 +348,10 @@ const ModuleDetailPage = () => {
                                   </Button>
                                 </div>
                                 <p className="text-sm text-primary">
-                                  {
-                                    item.translation[
-                                      selectedLanguage as keyof typeof item.translation
-                                    ]
-                                  }
+                                  {item.translations &&
+                                    item.translations[
+                                      selectedLanguage as keyof typeof item.translations
+                                    ]}
                                 </p>
                               </div>
                             ),
@@ -327,6 +385,13 @@ const ModuleDetailPage = () => {
                               </TabsTrigger>
                             ),
                           )}
+                          {selectedDialogue.content.dialogues[0].title ===
+                            "Being Pulled Over" && (
+                            <TabsTrigger value="roleplay">
+                              <MessageSquare className="h-4 w-4 mr-1" />
+                              AI Roleplay
+                            </TabsTrigger>
+                          )}
                         </TabsList>
 
                         {selectedDialogue.content.dialogues.map(
@@ -356,17 +421,9 @@ const ModuleDetailPage = () => {
                                             variant="ghost"
                                             size="sm"
                                             className="h-6 w-6 p-0"
-                                            onClick={() => {
-                                              const utterance =
-                                                new SpeechSynthesisUtterance(
-                                                  exchange.text,
-                                                );
-                                              utterance.lang = "en-US";
-                                              utterance.rate = 0.9; // Slightly slower for clarity
-                                              window.speechSynthesis.speak(
-                                                utterance,
-                                              );
-                                            }}
+                                            onClick={() =>
+                                              playLineAudio(exchange.text)
+                                            }
                                           >
                                             <Volume2 className="h-3 w-3" />
                                             <span className="sr-only">
@@ -383,20 +440,92 @@ const ModuleDetailPage = () => {
                               <div className="mt-4 flex justify-center">
                                 <Button
                                   onClick={() => {
+                                    console.log(
+                                      "[Module] Playing full dialogue",
+                                    );
                                     // Play the entire dialogue
                                     dialogue.exchanges.forEach(
                                       (exchange, i) => {
-                                        const utterance =
-                                          new SpeechSynthesisUtterance(
-                                            exchange.text,
-                                          );
-                                        utterance.lang = "en-US";
-                                        utterance.rate = 0.9;
                                         // Add delay between speakers
-                                        setTimeout(() => {
-                                          window.speechSynthesis.speak(
-                                            utterance,
+                                        setTimeout(async () => {
+                                          console.log(
+                                            `[Module] Playing exchange ${i + 1}/${dialogue.exchanges.length}: "${exchange.text.substring(0, 30)}..."`,
                                           );
+                                          // Call the ElevenLabs TTS API
+                                          console.log(
+                                            "[Module] Sending fetch request to TTS API",
+                                          );
+                                          // Use Supabase Edge Function for TTS
+                                          const { supabase } = await import(
+                                            "@/lib/supabase"
+                                          );
+
+                                          supabase.functions
+                                            .invoke(
+                                              "supabase-functions-tts-service",
+                                              {
+                                                body: { text: exchange.text },
+                                              },
+                                            )
+                                            .then(({ data, error }) => {
+                                              if (error) {
+                                                console.error(
+                                                  `[Module] Exchange ${i + 1} error:`,
+                                                  error,
+                                                );
+                                                throw error;
+                                              }
+
+                                              console.log(
+                                                `[Module] Exchange ${i + 1} response data received`,
+                                              );
+
+                                              const audioUrl = data?.audioUrl;
+                                              console.log(
+                                                `[Module] Exchange ${i + 1} extracted audioUrl:`,
+                                                audioUrl,
+                                              );
+
+                                              if (audioUrl) {
+                                                console.log(
+                                                  `[Module] Exchange ${i + 1} creating Audio object with URL:`,
+                                                  audioUrl,
+                                                );
+                                                const audio = new Audio(
+                                                  audioUrl,
+                                                );
+                                                console.log(
+                                                  `[Module] Exchange ${i + 1} attempting to play audio...`,
+                                                );
+                                                audio
+                                                  .play()
+                                                  .then(() =>
+                                                    console.log(
+                                                      `[Module] Exchange ${i + 1} audio playback started successfully`,
+                                                    ),
+                                                  )
+                                                  .catch((error) => {
+                                                    console.error(
+                                                      `[Module] Exchange ${i + 1} error playing audio:`,
+                                                      error,
+                                                    );
+                                                  });
+                                              } else {
+                                                console.error(
+                                                  `[Module] Exchange ${i + 1} no audioUrl found in response. Full response:`,
+                                                  data,
+                                                );
+                                                throw new Error(
+                                                  "No audio URL returned from TTS API",
+                                                );
+                                              }
+                                            })
+                                            .catch((error) => {
+                                              console.error(
+                                                `[Module] Exchange ${i + 1} error with TTS process:`,
+                                                error,
+                                              );
+                                            });
                                         }, i * 3000); // 3 second delay between each line
                                       },
                                     );
@@ -408,6 +537,31 @@ const ModuleDetailPage = () => {
                               </div>
                             </TabsContent>
                           ),
+                        )}
+
+                        {/* AI Roleplay Tab */}
+                        {selectedDialogue.content.dialogues[0].title ===
+                          "Being Pulled Over" && (
+                          <TabsContent
+                            value="roleplay"
+                            className="border rounded-lg p-0 bg-white overflow-hidden"
+                          >
+                            <RoleplayDialogue
+                              title="Traffic Stop Roleplay"
+                              description="Practice responding to a police officer during a traffic stop. You play the driver."
+                              exchanges={
+                                selectedDialogue.content.dialogues[0].exchanges
+                              }
+                              nativeLanguage={
+                                selectedLanguage === "tr"
+                                  ? "turkish"
+                                  : selectedLanguage === "kg"
+                                    ? "kyrgyz"
+                                    : "russian"
+                              }
+                              onComplete={() => {}}
+                            />
+                          </TabsContent>
                         )}
                       </Tabs>
                     </div>
@@ -509,10 +663,10 @@ const ModuleDetailPage = () => {
                     translatedText: "",
                     vocabulary:
                       selectedDialogue.content?.vocabulary?.map((v) => ({
-                        word: v.word,
+                        word: v.english,
                         translation:
-                          v.translation[
-                            selectedLanguage as keyof typeof v.translation
+                          v.translations[
+                            selectedLanguage as keyof typeof v.translations
                           ] || "",
                         definition: "",
                       })) || [],
@@ -611,13 +765,14 @@ const ModuleDetailPage = () => {
               <TabsContent value="vocabulary" className="mt-6">
                 <Card>
                   <CardContent className="p-6">
-                    {activeTab === "vocabulary" &&
-                    moduleData.dialogues[0]?.content?.vocabulary ? (
-                      <div className="space-y-4">
-                        <h3 className="text-lg font-medium text-center mb-4">
-                          Vocabulary List
-                        </h3>
-                        <ScrollArea className="h-[400px] pr-4">
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-medium text-center mb-4">
+                        Vocabulary List
+                      </h3>
+                      <ScrollArea className="h-[400px] pr-4">
+                        {moduleData.dialogues[0]?.content?.vocabulary &&
+                        moduleData.dialogues[0].content.vocabulary.length >
+                          0 ? (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {moduleData.dialogues[0].content.vocabulary.map(
                               (item, index) => (
@@ -648,11 +803,10 @@ const ModuleDetailPage = () => {
                                     </Button>
                                   </div>
                                   <p className="text-primary font-medium mb-1">
-                                    {
+                                    {item.translations &&
                                       item.translations[
                                         selectedLanguage as keyof typeof item.translations
-                                      ]
-                                    }
+                                      ]}
                                   </p>
                                   {item.definition && (
                                     <p className="text-sm text-gray-600">
@@ -663,22 +817,15 @@ const ModuleDetailPage = () => {
                               ),
                             )}
                           </div>
-                        </ScrollArea>
-                      </div>
-                    ) : (
-                      <div className="text-center py-8">
-                        <BarChart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
-                        <h3 className="text-lg font-medium mb-2">
-                          Vocabulary List
-                        </h3>
-                        <p className="text-gray-500 mb-4">
-                          Key terms and phrases from this module
-                        </p>
-                        <Button onClick={() => setActiveTab("vocabulary")}>
-                          View Vocabulary
-                        </Button>
-                      </div>
-                    )}
+                        ) : (
+                          <div className="text-center py-8">
+                            <p className="text-gray-500 mb-4">
+                              No vocabulary available for this module yet.
+                            </p>
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </div>
                   </CardContent>
                 </Card>
               </TabsContent>

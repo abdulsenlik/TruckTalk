@@ -36,9 +36,9 @@ const modules = trafficStopCourse.map((section, index) => ({
 function getImageForSection(sectionId: string): string {
   switch (sectionId) {
     case "initial-stop":
-      return "https://images.unsplash.com/photo-1556155092-490a1ba16284?w=600&q=80";
+      return "https://images.unsplash.com/photo-1617906855223-a69f14c9841d?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
     case "document-check":
-      return "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80";
+      return "https://images.unsplash.com/photo-1631651693480-97f1132e333d?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
     case "vehicle-inspection":
       return "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=80";
     case "explaining-situations":
@@ -94,6 +94,25 @@ const emergencyPhrases = [
     },
   },
 ];
+
+// Helper function to get appropriate image for each emergency phrase
+function getEmergencyPhraseImage(phrase: string): string {
+  // Map phrases to relevant images
+  switch (phrase.toLowerCase()) {
+    case "i need medical help":
+      return "https://plumgroveinc.com/wp-content/uploads/medical-assistance-window-decals-32-2000x2000.jpg"; // Ambulance/medical image
+    case "my truck broke down":
+      return "https://farm8.staticflickr.com/7232/7324846058_c01551db3c_z.jpg"; // Broken down truck
+    case "i have a flat tire":
+      return "https://www.bankrate.com/2022/07/27111118/flat-tire-statistics.jpg"; // Flat tire
+    case "i need a tow truck":
+      return "https://www.bobtail.com/wp-content/uploads/2024/02/predatory-towing.jpg"; // Tow truck
+    case "there has been an accident":
+      return "https://www.attorneyjaviermarcos.com/wp-content/uploads/2016/05/6.-18-wheeler-1024x680.jpg"; // Accident scene
+    default:
+      return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=600&q=80"; // Default truck image
+  }
+}
 
 const Home = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -252,52 +271,159 @@ const Home = () => {
           </div>
 
           <div className="space-y-4">
-            {emergencyPhrases.map((item, index) => (
-              <Card key={index}>
-                <CardContent className="p-4">
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-                    <div>
-                      <p className="font-medium text-lg">{item.phrase}</p>
-                      <p className="text-muted-foreground">
-                        {
-                          item.translation[
-                            language as keyof typeof item.translation
-                          ]
-                        }
-                      </p>
+            {emergencyPhrases.map((item, index) => {
+              const imageUrl = getEmergencyPhraseImage(item.phrase);
+              console.log(
+                `Emergency phrase image URL for "${item.phrase}": ${imageUrl}`,
+              );
+
+              return (
+                <Card key={index}>
+                  <CardContent className="p-4">
+                    <div className="flex flex-col md:flex-row gap-4">
+                      <div className="w-full md:w-1/4 h-32 md:h-auto">
+                        <img
+                          src={imageUrl}
+                          alt={item.phrase}
+                          className="w-full h-full object-cover rounded-md"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 flex-1">
+                        <div>
+                          <p className="font-medium text-lg">{item.phrase}</p>
+                          <p className="text-muted-foreground">
+                            {
+                              item.translation[
+                                language as keyof typeof item.translation
+                              ]
+                            }
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={async () => {
+                            try {
+                              // Call the ElevenLabs TTS API
+                              console.log(
+                                "[Home] Calling TTS API for emergency phrase:",
+                                item.phrase,
+                              );
+                              // Use Supabase Edge Function for TTS
+                              const { supabase } = await import(
+                                "@/lib/supabase"
+                              );
+
+                              supabase.functions
+                                .invoke("supabase-functions-tts-service", {
+                                  body: { text: item.phrase },
+                                })
+                                .then(({ data, error }) => {
+                                  if (error) {
+                                    console.error("[Home] TTS error:", error);
+                                    throw error;
+                                  }
+
+                                  console.log(
+                                    "[Home] TTS response data received",
+                                  );
+
+                                  // Get audio URL from response
+                                  const audioUrl = data?.audioUrl;
+                                  console.log(
+                                    "[Home] Extracted audioUrl:",
+                                    audioUrl,
+                                  );
+
+                                  if (audioUrl) {
+                                    console.log(
+                                      "[Home] Attempting to play emergency phrase audio:",
+                                      audioUrl,
+                                    );
+                                    const audio = new Audio(audioUrl);
+                                    return audio
+                                      .play()
+                                      .then(() =>
+                                        console.log(
+                                          "[Home] Emergency phrase audio played successfully",
+                                        ),
+                                      )
+                                      .catch((playError) => {
+                                        console.error(
+                                          "[Home] Error playing emergency phrase audio:",
+                                          playError,
+                                        );
+                                        // Create a download link if playback fails
+                                        const downloadLink =
+                                          document.createElement("a");
+                                        downloadLink.href = audioUrl;
+                                        downloadLink.download =
+                                          "emergency-phrase.mp3";
+                                        downloadLink.innerHTML =
+                                          "Download Audio";
+                                        downloadLink.style.color = "blue";
+                                        downloadLink.style.textDecoration =
+                                          "underline";
+                                        downloadLink.style.cursor = "pointer";
+                                        downloadLink.style.marginTop = "5px";
+
+                                        // Find the button that was clicked and append the download link after it
+                                        const button = document.activeElement;
+                                        if (button && button.parentNode) {
+                                          button.parentNode.appendChild(
+                                            document.createElement("br"),
+                                          );
+                                          button.parentNode.appendChild(
+                                            downloadLink,
+                                          );
+                                        }
+
+                                        throw playError;
+                                      });
+                                  } else {
+                                    console.error(
+                                      "[Home] No audioUrl found in response. Full response:",
+                                      data,
+                                    );
+                                    throw new Error(
+                                      "No audio URL returned from TTS API",
+                                    );
+                                  }
+                                })
+                                .catch((error) => {
+                                  console.error(
+                                    "[Home] Error with TTS process:",
+                                    error,
+                                  );
+                                });
+                            } catch (error) {
+                              console.error("[Home] Error:", error);
+                            }
+                          }}
+                        >
+                          <span className="sr-only">Play audio</span>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="h-6 w-6"
+                          >
+                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                          </svg>
+                        </Button>
+                      </div>
                     </div>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        const utterance = new SpeechSynthesisUtterance(
-                          item.phrase,
-                        );
-                        utterance.lang = "en-US";
-                        utterance.rate = 0.9; // Slightly slower for clarity
-                        window.speechSynthesis.speak(utterance);
-                      }}
-                    >
-                      <span className="sr-only">Play audio</span>
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-6 w-6"
-                      >
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                        <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                      </svg>
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </section>
       </main>

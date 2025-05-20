@@ -1,26 +1,16 @@
-// Edge function for text-to-speech using ElevenLabs API
+// Edge function for text-to-speech service integration
 
-interface TextToSpeechRequest {
-  text: string;
-  voice?: string;
-  language?: string;
-  speed?: number;
-}
-
-interface TextToSpeechResponse {
-  audioUrl: string;
-  duration: number;
-}
+import { corsHeaders } from "../_shared/cors.ts";
+import {
+  TextToSpeechRequest,
+  TextToSpeechResponse,
+} from "../_shared/tts-types.ts";
 
 Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response("ok", {
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Headers":
-          "authorization, x-client-info, apikey, content-type",
-      },
+      headers: corsHeaders,
       status: 200,
     });
   }
@@ -102,32 +92,27 @@ Deno.serve(async (req) => {
 
     console.log("Audio URL created successfully");
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        data: {
-          audioUrl,
-          duration: 0, // Actual duration would require audio analysis
-        },
-      }),
-      {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Content-Type": "application/json",
-        },
-        status: 200,
+    const result: TextToSpeechResponse = {
+      audioUrl,
+      duration: 0, // Actual duration would require audio analysis
+    };
+
+    return new Response(JSON.stringify(result), {
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
       },
-    );
+      status: 200,
+    });
   } catch (error) {
     console.error("TTS Error:", error);
     return new Response(
       JSON.stringify({
-        success: false,
-        error: error.message,
+        error: error.message || "Failed to generate speech",
       }),
       {
         headers: {
-          "Access-Control-Allow-Origin": "*",
+          ...corsHeaders,
           "Content-Type": "application/json",
         },
         status: 400,

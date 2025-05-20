@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, Volume2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -188,6 +188,13 @@ const EmergencyPage = () => {
     {},
   );
   const [phraseImages, setPhraseImages] = useState<Record<number, string>>({});
+  const [audioPlaybackErrors, setAudioPlaybackErrors] = useState<
+    Record<number, string>
+  >({});
+  const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
+  const [audioRefs, setAudioRefs] = useState<Record<number, HTMLAudioElement>>(
+    {},
+  );
 
   const filteredPhrases = emergencyPhrases.filter((phrase) => {
     const matchesSearch = phrase.phrase
@@ -198,12 +205,85 @@ const EmergencyPage = () => {
     return matchesSearch && matchesCategory;
   });
 
-  const playAudio = (phrase: EmergencyPhrase) => {
-    // Create and play audio using Web Speech API
-    const utterance = new SpeechSynthesisUtterance(phrase.phrase);
-    utterance.lang = "en-US";
-    utterance.rate = 0.9; // Slightly slower for clarity
-    window.speechSynthesis.speak(utterance);
+  const playAudio = async (phrase: EmergencyPhrase) => {
+    console.log(`[Emergency] Playing audio for phrase: "${phrase.phrase}"`);
+    // Set loading state
+    setLoadingImages((prev) => ({ ...prev, [`audio-${phrase.id}`]: true }));
+    setAudioPlaybackErrors((prev) => ({ ...prev, [phrase.id]: "" }));
+
+    try {
+      // Call the ElevenLabs TTS API
+      console.log("[Emergency] Sending fetch request to TTS API");
+      // Use Supabase Edge Function for TTS
+      const { supabase } = await import("@/lib/supabase");
+
+      supabase.functions
+        .invoke("supabase-functions-tts-service", {
+          body: { text: phrase.phrase },
+        })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("[Emergency] TTS error:", error);
+            throw error;
+          }
+
+          console.log("[Emergency] TTS response data received");
+
+          // Get audio URL from response
+          const audioUrl = data?.audioUrl;
+          console.log("[Emergency] Extracted audioUrl:", audioUrl);
+
+          if (audioUrl) {
+            // Store the audio URL for potential download
+            setAudioUrls((prev) => ({ ...prev, [phrase.id]: audioUrl }));
+
+            console.log(
+              "[Emergency] Creating Audio object with URL:",
+              audioUrl,
+            );
+            const audio = new Audio(audioUrl);
+            console.log("[Emergency] Attempting to play audio...");
+            return audio.play().catch((playError) => {
+              console.error("[Emergency] Error playing audio:", playError);
+              setAudioPlaybackErrors((prev) => ({
+                ...prev,
+                [phrase.id]: "Playback failed. Try downloading instead.",
+              }));
+              throw playError;
+            });
+          } else {
+            console.error(
+              "[Emergency] No audioUrl found in response. Full response:",
+              data,
+            );
+            throw new Error("No audio URL returned from TTS API");
+          }
+        })
+        .catch((error) => {
+          console.error("[Emergency] Error with TTS process:", error);
+          setAudioPlaybackErrors((prev) => ({
+            ...prev,
+            [phrase.id]:
+              error instanceof Error ? error.message : "Unknown error",
+          }));
+        })
+        .finally(() => {
+          // Set loading to false after processing
+          setTimeout(() => {
+            setLoadingImages((prev) => ({
+              ...prev,
+              [`audio-${phrase.id}`]: false,
+            }));
+          }, 1000);
+        });
+    } catch (error) {
+      console.error("[Emergency] Error with TTS setup:", error);
+      setAudioPlaybackErrors((prev) => ({
+        ...prev,
+        [phrase.id]: error instanceof Error ? error.message : "Unknown error",
+      }));
+      setLoadingImages((prev) => ({ ...prev, [`audio-${phrase.id}`]: false }));
+    }
   };
 
   const generateImage = async (phrase: EmergencyPhrase) => {
@@ -235,6 +315,29 @@ const EmergencyPage = () => {
       setLoadingImages((prev) => ({ ...prev, [phrase.id]: false }));
     }
   };
+
+  useEffect(() => {
+    // Auto-generate images for the first few phrases when the page loads
+    const autoGenerateImages = async () => {
+      for (let i = 0; i < Math.min(5, emergencyPhrases.length); i++) {
+        await generateImage(emergencyPhrases[i]);
+      }
+    };
+
+    autoGenerateImages();
+
+    return () => {
+      if (audioRefs.current) {
+        Object.values(audioRefs.current).forEach((audio) => {
+          if (audio) {
+            audio.pause();
+            audio.src = "";
+          }
+        });
+        audioRefs.current = {};
+      }
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -333,14 +436,39 @@ const EmergencyPage = () => {
                           </p>
                         </div>
                         <div className="flex space-x-2 self-end md:self-center">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => playAudio(phrase)}
-                          >
-                            <Volume2 className="h-5 w-5" />
-                            <span className="sr-only">Play audio</span>
-                          </Button>
+                          <div className="flex flex-col items-center">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => playAudio(phrase)}
+                              disabled={loadingImages[`audio-${phrase.id}`]}
+                            >
+                              {loadingImages[`audio-${phrase.id}`] ? (
+                                <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></span>
+                              ) : (
+                                <Volume2 className="h-5 w-5" />
+                              )}
+                              <span className="sr-only">Play audio</span>
+                            </Button>
+                            {audioPlaybackErrors[phrase.id] && (
+                              <div className="flex flex-col items-center mt-1">
+                                <span className="text-xs text-red-500">
+                                  {audioPlaybackErrors[phrase.id]}
+                                </span>
+                                {audioUrls[phrase.id] && (
+                                  <a
+                                    href={audioUrls[phrase.id]}
+                                    download={`${phrase.phrase.replace(/\s+/g, "-").toLowerCase()}.mp3`}
+                                    className="text-xs text-blue-500 hover:underline"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Download Audio
+                                  </a>
+                                )}
+                              </div>
+                            )}
+                          </div>
                           <Button
                             size="sm"
                             variant="outline"
@@ -380,17 +508,7 @@ const EmergencyPage = () => {
                         </div>
                       </div>
 
-                      {phraseImages[phrase.id] && (
-                        <div className="mt-2">
-                          <div className="relative rounded-md overflow-hidden aspect-video">
-                            <img
-                              src={phraseImages[phrase.id]}
-                              alt={phrase.phrase}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                        </div>
-                      )}
+                      {/* Image is now shown above, no need for duplicate */}
                     </div>
                   </CardContent>
                 </Card>

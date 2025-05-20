@@ -122,6 +122,10 @@ const DialoguePlayer = ({
   >({});
   const [showResults, setShowResults] = useState(false);
   const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
+  const [audioPlaybackError, setAudioPlaybackError] = useState<
+    Record<string, string>
+  >({});
+  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
 
   // Audio reference
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -196,94 +200,36 @@ const DialoguePlayer = ({
   const playLineAudio = async (text: string) => {
     try {
       console.log(
-        "Calling text-to-speech function for line:",
+        "[DialoguePlayer] Calling text-to-speech function for line:",
         text.substring(0, 30) + "...",
       );
-      // Call the Supabase Edge Function for text-to-speech
-      const { data, error } = await supabase.functions.invoke(
-        "supabase-functions-text-to-speech",
-        {
-          body: {
-            text: text,
-            language: "en-US",
-            speed: 0.9,
-          },
-        },
+
+      await playText(
+        text,
+        `line-${text.substring(0, 10).replace(/\s+/g, "-")}`,
       );
-
-      if (error) {
-        console.error("Supabase function error:", error);
-        throw error;
-      }
-
-      console.log("TTS response:", data);
-
-      if (data?.data?.audioUrl) {
-        // Play the audio from the returned URL
-        const audio = new Audio(data.data.audioUrl);
-        await audio.play();
-        console.log("Playing audio from URL");
-      } else {
-        console.log("No audio URL returned, falling back to Web Speech API");
-        // Fallback to Web Speech API if no audio URL is returned
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = "en-US";
-        utterance.rate = 0.9; // Slightly slower for clarity
-        window.speechSynthesis.speak(utterance);
-      }
+      console.log("[DialoguePlayer] Playing audio from URL - success");
     } catch (error) {
-      console.error("Error playing audio:", error);
-      // Fallback to Web Speech API
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = "en-US";
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
+      console.error("[DialoguePlayer] Error playing audio:", error);
     }
   };
 
   const playVocabularyAudio = async (word: string) => {
-    setAudioLoading((prev) => ({ ...prev, [word]: true }));
+    setAudioPlaybackError((prev) => ({ ...prev, [word]: "" }));
 
     try {
-      // Call the Supabase Edge Function for text-to-speech
-      const { data, error } = await supabase.functions.invoke(
-        "supabase-functions-text-to-speech",
-        {
-          body: {
-            text: word,
-            language: "en-US",
-            speed: 0.9,
-          },
-        },
+      console.log("[DialoguePlayer] Playing vocabulary audio for word:", word);
+      await playText(word, word);
+      console.log(
+        "[DialoguePlayer] Successfully started playing audio for word:",
+        word,
       );
-
-      if (error) {
-        throw error;
-      }
-
-      if (data?.data?.audioUrl) {
-        // Play the audio from the returned URL
-        const audio = new Audio(data.data.audioUrl);
-        audio.play();
-      } else {
-        // Fallback to Web Speech API if no audio URL is returned
-        const utterance = new SpeechSynthesisUtterance(word);
-        utterance.lang = "en-US";
-        utterance.rate = 0.9; // Slightly slower for clarity
-        window.speechSynthesis.speak(utterance);
-      }
     } catch (error) {
-      console.error("Error playing audio:", error);
-      // Fallback to Web Speech API
-      const utterance = new SpeechSynthesisUtterance(word);
-      utterance.lang = "en-US";
-      utterance.rate = 0.9;
-      window.speechSynthesis.speak(utterance);
-    } finally {
-      // Set loading to false after processing
-      setTimeout(() => {
-        setAudioLoading((prev) => ({ ...prev, [word]: false }));
-      }, 1000);
+      console.error("[DialoguePlayer] Error playing vocabulary audio:", error);
+      setAudioPlaybackError((prev) => ({
+        ...prev,
+        [word]: error instanceof Error ? error.message : "Unknown error",
+      }));
     }
   };
 
@@ -468,19 +414,39 @@ const DialoguePlayer = ({
                     <div className="flex justify-between">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{item.word}</span>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="h-6 w-6 p-0"
-                          onClick={() => playVocabularyAudio(item.word)}
-                          disabled={audioLoading[item.word]}
-                        >
-                          {audioLoading && audioLoading[item.word] ? (
-                            <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
-                          ) : (
-                            <Volume2 className="h-3 w-3" />
+                        <div className="flex flex-col items-end">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={() => playVocabularyAudio(item.word)}
+                            disabled={audioLoading[item.word]}
+                          >
+                            {audioLoading && audioLoading[item.word] ? (
+                              <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                            ) : (
+                              <Volume2 className="h-3 w-3" />
+                            )}
+                          </Button>
+                          {audioPlaybackError[item.word] && (
+                            <div className="flex flex-col items-end mt-1">
+                              <span className="text-xs text-red-500">
+                                {audioPlaybackError[item.word]}
+                              </span>
+                              {audioUrls[item.word] && (
+                                <a
+                                  href={audioUrls[item.word]}
+                                  download={`${item.word}.mp3`}
+                                  className="text-xs text-blue-500 hover:underline"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                >
+                                  Download Audio
+                                </a>
+                              )}
+                            </div>
                           )}
-                        </Button>
+                        </div>
                       </div>
                       <span className="text-sm text-blue-600">
                         {item.translation}
