@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "scheme": "acme",
+    "plugins": [
+      "expo-router"
+    ],
+    "name": "TruckTalk-mobile",
+    "slug": "TruckTalk-mobile",
+    "icon": "./assets/images/placeholder.png",
+    "splash": {
+      "image": "./assets/images/placeholder.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FF5722"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/placeholder.png",
+        "backgroundColor": "#FF5722"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/images/placeholder.png"
+    }
+  }
+}
