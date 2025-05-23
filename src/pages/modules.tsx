@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Search, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,103 +12,51 @@ import {
 } from "@/components/ui/select";
 import ModuleCard from "@/components/ModuleCard";
 import LanguageSelector from "@/components/LanguageSelector";
+import { trafficStopCourse } from "@/data/trafficStopCourse";
 
-const modules = [
-  {
-    id: 1,
-    title: "Basic Greetings & ID Check",
-    description:
-      "Learn essential phrases for introducing yourself and handling ID verification during traffic stops.",
-    dialogues: 6,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80",
-    difficulty: "Beginner",
-  },
-  {
-    id: 2,
-    title: "Road Signs & Traffic Rules",
-    description:
-      "Understand common road signs, traffic rules, and how to explain your actions to officers.",
-    dialogues: 8,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1564694457547-80311e2e653a?w=600&q=80",
-    difficulty: "Beginner",
-  },
-  {
-    id: 3,
-    title: "Dealing with Police/DOT Officers",
-    description:
-      "Learn how to communicate effectively with law enforcement and DOT officials during inspections.",
-    dialogues: 10,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80",
-    difficulty: "Intermediate",
-    isLocked: true,
-  },
-  {
-    id: 4,
-    title: "Emergency and Accident Situations",
-    description:
-      "Essential vocabulary and phrases for handling roadside emergencies and accidents.",
-    dialogues: 7,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?w=600&q=80",
-    difficulty: "Intermediate",
-    isLocked: true,
-  },
-  {
-    id: 5,
-    title: "Border Crossing and Inspection",
-    description:
-      "Communication skills for border crossings, customs, and international transport documentation.",
-    dialogues: 9,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1631248055158-edec7a3c072b?w=600&q=80",
-    difficulty: "Advanced",
-    isLocked: true,
-  },
-  {
-    id: 6,
-    title: "Vehicle Maintenance Vocabulary",
-    description:
-      "Learn terms related to truck parts, maintenance issues, and repair conversations.",
-    dialogues: 8,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1599256872237-5dcc0fbe9668?w=600&q=80",
-    difficulty: "Advanced",
-    isLocked: true,
-  },
-  {
-    id: 7,
-    title: "Cargo Documentation",
-    description:
-      "Vocabulary for discussing cargo manifests, bills of lading, and other shipping documents.",
-    dialogues: 6,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80",
-    difficulty: "Intermediate",
-    isLocked: true,
-  },
-  {
-    id: 8,
-    title: "Weather Conditions & Road Safety",
-    description:
-      "Essential phrases for discussing weather conditions, road hazards, and safety precautions.",
-    dialogues: 7,
-    completion: 0,
-    image:
-      "https://images.unsplash.com/photo-1520095972714-909e91b038e5?w=600&q=80",
-    difficulty: "Beginner",
-    isLocked: true,
-  },
-];
+// Helper function to get appropriate image for each section
+function getImageForSection(sectionId: string): string {
+  switch (sectionId) {
+    case "initial-stop":
+      return "https://images.unsplash.com/photo-1617906855223-a69f14c9841d?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+    case "document-check":
+      return "https://images.unsplash.com/photo-1631651693480-97f1132e333d?q=80&w=2940&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D";
+    case "vehicle-inspection":
+      return "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=80";
+    case "explaining-situations":
+      return "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80";
+    case "citations-and-tickets":
+      return "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=600&q=80";
+    case "emergency-situations":
+      return "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=600&q=80";
+    case "basic-greetings":
+      return "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80";
+    case "road-signs-traffic-rules":
+      return "https://images.unsplash.com/photo-1564694457547-80311e2e653a?w=600&q=80";
+    case "border-crossing":
+      return "https://images.unsplash.com/photo-1631248055158-edec7a3c072b?w=600&q=80";
+    case "vehicle-maintenance":
+      return "https://images.unsplash.com/photo-1599256872237-5dcc0fbe9668?w=600&q=80";
+    case "cargo-documentation":
+      return "https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?w=600&q=80";
+    case "weather-road-safety":
+      return "https://images.unsplash.com/photo-1520095972714-909e91b038e5?w=600&q=80";
+    default:
+      return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=600&q=80";
+  }
+}
+
+// Convert traffic stop course data to module format
+const modules = trafficStopCourse.map((section, index) => ({
+  id: section.id,
+  title: section.title,
+  description: section.description,
+  dialogues: section.dialogues.length,
+  completion: 0,
+  image: getImageForSection(section.id),
+  difficulty: index < 3 ? "Beginner" : index < 7 ? "Intermediate" : "Advanced",
+  isLocked: false, // Remove premium firewall
+}));
 
 const ModulesPage = () => {
   const navigate = useNavigate();
@@ -136,7 +84,15 @@ const ModulesPage = () => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               Back
             </Button>
-            <h1 className="text-xl font-bold">Learning Modules</h1>
+            <Link
+              to="/"
+              className="text-xl font-bold hover:text-blue-600 transition-colors"
+            >
+              TruckTalk
+            </Link>
+            <span className="text-xl font-bold text-muted-foreground">
+              / Learning Modules
+            </span>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSelector

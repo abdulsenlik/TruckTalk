@@ -81,30 +81,51 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
 
   // Initialize Web Speech API for speech recognition
   useEffect(() => {
-    if (window.SpeechRecognition || window.webkitSpeechRecognition) {
-      const SpeechRecognition =
-        window.SpeechRecognition || window.webkitSpeechRecognition;
+    // Define SpeechRecognition with TypeScript compatibility
+    const SpeechRecognition =
+      window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (SpeechRecognition) {
+      console.log("[RoleplayDialogue] Speech recognition is supported");
       const recognitionInstance = new SpeechRecognition();
       recognitionInstance.continuous = false;
-      recognitionInstance.interimResults = false;
+      recognitionInstance.interimResults = true;
       recognitionInstance.lang = "en-US";
+
+      recognitionInstance.onstart = () => {
+        console.log("[RoleplayDialogue] Speech recognition started");
+      };
 
       recognitionInstance.onresult = (event) => {
         const transcript = event.results[0][0].transcript;
+        console.log("[RoleplayDialogue] Speech recognized:", transcript);
         setUserInput(transcript);
-        setIsRecording(false);
+
+        // If we have a final result, stop recording
+        if (event.results[0].isFinal) {
+          console.log("[RoleplayDialogue] Final result received");
+          setIsRecording(false);
+        }
       };
 
       recognitionInstance.onerror = (event) => {
-        console.error("Speech recognition error", event.error);
+        console.error(
+          "[RoleplayDialogue] Speech recognition error:",
+          event.error,
+        );
         setIsRecording(false);
       };
 
       recognitionInstance.onend = () => {
+        console.log("[RoleplayDialogue] Speech recognition ended");
         setIsRecording(false);
       };
 
       setRecognition(recognitionInstance);
+    } else {
+      console.warn(
+        "[RoleplayDialogue] Speech Recognition API not supported in this browser",
+      );
     }
 
     return () => {
@@ -135,15 +156,19 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
 
   const playOfficerLine = async (text: string) => {
     try {
-      console.log("[Roleplay] Playing officer line:", text);
+      console.log("[RoleplayDialogue] Playing officer line:", text);
       await playText(text, `officer-${conversation.length}`);
+      return true;
     } catch (error) {
-      console.error("[Roleplay] Error playing officer line:", error);
+      console.error("[RoleplayDialogue] Error playing officer line:", error);
+      return false;
     }
   };
 
-  const handleUserInput = () => {
+  const handleUserInput = async () => {
     if (!userInput.trim()) return;
+
+    console.log("[RoleplayDialogue] Processing user input:", userInput);
 
     // Add user's response to conversation
     const userExchange: DialogueExchange = {
@@ -155,14 +180,23 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
     setIsProcessing(true);
 
     // Get the next officer line if available
-    setTimeout(() => {
+    setTimeout(async () => {
       if (
         currentExchangeIndex < exchanges.length &&
         exchanges[currentExchangeIndex].speaker === "Officer"
       ) {
         const nextOfficerExchange = exchanges[currentExchangeIndex];
         setConversation((prev) => [...prev, nextOfficerExchange]);
-        playOfficerLine(nextOfficerExchange.text);
+
+        try {
+          await playOfficerLine(nextOfficerExchange.text);
+        } catch (error) {
+          console.error(
+            "[RoleplayDialogue] Error playing officer line:",
+            error,
+          );
+        }
+
         setCurrentExchangeIndex(currentExchangeIndex + 1);
       } else if (currentExchangeIndex >= exchanges.length - 1) {
         // End of roleplay
@@ -181,14 +215,42 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
   };
 
   const toggleRecording = () => {
-    if (!recognition) return;
+    if (!recognition) {
+      console.warn("[RoleplayDialogue] Speech recognition not available");
+      return;
+    }
 
     if (isRecording) {
+      console.log("[RoleplayDialogue] Stopping recording");
       recognition.stop();
     } else {
+      console.log("[RoleplayDialogue] Starting recording");
       setShowSuggestions(false);
-      recognition.start();
-      setIsRecording(true);
+
+      // Request microphone permission
+      navigator.mediaDevices
+        .getUserMedia({ audio: true })
+        .then(() => {
+          // Permission granted, start recognition
+          try {
+            recognition.start();
+            setIsRecording(true);
+          } catch (error) {
+            console.error(
+              "[RoleplayDialogue] Error starting recognition:",
+              error,
+            );
+          }
+        })
+        .catch((error) => {
+          console.error(
+            "[RoleplayDialogue] Microphone permission denied:",
+            error,
+          );
+          alert(
+            "Microphone access is required for speech recognition. Please allow microphone access.",
+          );
+        });
     }
   };
 
@@ -265,14 +327,14 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
           </div>
 
           {/* Conversation Area */}
-          <div className="border rounded-lg p-4 h-80 overflow-y-auto">
+          <div className="border rounded-lg p-4 h-80 overflow-y-auto bg-white shadow-inner">
             {conversation.map((exchange, index) => (
               <div
                 key={index}
                 className={`mb-4 flex ${exchange.speaker === "Officer" ? "justify-start" : "justify-end"}`}
               >
                 <div
-                  className={`max-w-[80%] p-3 rounded-lg ${exchange.speaker === "Officer" ? "bg-slate-100" : "bg-blue-50"}`}
+                  className={`max-w-[80%] p-4 rounded-lg shadow-sm transition-all ${exchange.speaker === "Officer" ? "bg-slate-100" : "bg-blue-50"}`}
                 >
                   <div className="flex items-center gap-2 mb-1">
                     {exchange.speaker === "Officer" ? (
@@ -345,9 +407,18 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
                   size="icon"
                   onClick={toggleRecording}
                   disabled={!recognition}
+                  title={
+                    recognition
+                      ? "Click to use microphone"
+                      : "Speech recognition not supported in this browser"
+                  }
+                  className="relative transition-all duration-200 hover:bg-slate-100"
                 >
                   {isRecording ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
+                    </>
                   ) : (
                     <Mic className="h-4 w-4" />
                   )}
@@ -357,13 +428,14 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
                   value={userInput}
                   onChange={(e) => setUserInput(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleUserInput()}
-                  className="flex-1"
+                  className="flex-1 focus-visible:ring-primary/20 focus-visible:ring-offset-1"
                 />
                 <Button
                   variant="default"
                   size="icon"
                   onClick={handleUserInput}
                   disabled={!userInput.trim()}
+                  className="transition-all duration-200 hover:scale-105"
                 >
                   <Send className="h-4 w-4" />
                 </Button>
@@ -372,14 +444,22 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
           )}
 
           {isRoleplayComplete && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-              <h3 className="text-lg font-medium text-green-800 mb-2">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center shadow-sm">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+                <CheckCircle className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-medium text-green-800 mb-2">
                 Roleplay Complete!
               </h3>
-              <p className="text-sm text-green-700 mb-4">
+              <p className="text-sm text-green-700 mb-6">
                 You've successfully completed this roleplay scenario.
               </p>
-              <Button onClick={onComplete}>Continue</Button>
+              <Button
+                onClick={onComplete}
+                className="px-8 py-2 transition-all duration-200 hover:scale-105"
+              >
+                Continue to Next Lesson
+              </Button>
             </div>
           )}
         </div>

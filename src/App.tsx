@@ -7,11 +7,13 @@ import { supabase } from "./lib/supabase";
 
 // Lazy load pages for better performance
 const ModuleDetailPage = lazy(() => import("./pages/module/[id]"));
+const LessonDetailPage = lazy(() => import("./pages/lesson/[id]"));
 const SuccessPage = lazy(() => import("./pages/success"));
 const ModulesPage = lazy(() => import("./pages/modules"));
 const EmergencyPage = lazy(() => import("./pages/emergency"));
 const ProgressPage = lazy(() => import("./pages/progress"));
 const AuthPage = lazy(() => import("./pages/auth"));
+const PricingPage = lazy(() => import("./pages/pricing"));
 
 function App() {
   const navigate = useNavigate();
@@ -48,9 +50,11 @@ function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/module/:id" element={<ModuleDetailPage />} />
+          <Route path="/lesson/:id" element={<LessonDetailPage />} />
           <Route path="/modules" element={<ModulesPage />} />
           <Route path="/emergency" element={<EmergencyPage />} />
           <Route path="/progress" element={<ProgressPage />} />
+          <Route path="/pricing" element={<PricingPage />} />
           <Route path="/success" element={<SuccessPage />} />
           <Route path="/auth" element={<AuthPage />} />
           {/* Add tempobook route to prevent catchall from capturing it */}

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
   Award,
@@ -185,7 +185,16 @@ const ProgressPage = () => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               {t("button.back")}
             </Button>
-            <h1 className="text-xl font-bold">{t("progress.title")}</h1>
+            <div className="flex items-center space-x-2">
+              <Link
+                to="/"
+                className="text-xl font-bold hover:text-primary transition-colors"
+              >
+                TruckTalk
+              </Link>
+              <span className="text-xl font-bold text-muted-foreground">/</span>
+              <h1 className="text-xl font-bold">{t("progress.title")}</h1>
+            </div>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSelector />

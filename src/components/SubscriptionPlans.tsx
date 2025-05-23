@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Check, X } from "lucide-react";
@@ -30,6 +30,29 @@ interface SubscriptionPlan {
 const SubscriptionPlans = () => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const getUser = async () => {
+      setLoading(true);
+      const { data } = await supabase.auth.getUser();
+      setUser(data?.user || null);
+      setLoading(false);
+    };
+
+    getUser();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        setUser(session?.user || null);
+      },
+    );
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
 
   const handleSubscribe = async (planId: string) => {
     const { data: session } = await supabase.auth.getSession();
@@ -98,6 +121,20 @@ const SubscriptionPlans = () => {
       buttonText: "Subscribe",
     },
   ];
+
+  // If user is logged in, don't show subscription plans
+  if (user && !loading) {
+    return null;
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="py-12 bg-gray-50 flex justify-center items-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="py-12 bg-gray-50">

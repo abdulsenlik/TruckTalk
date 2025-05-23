@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { trafficStopCourse, Section } from "@/data/trafficStopCourse";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   ArrowLeft,
   CheckCircle,
@@ -20,6 +20,7 @@ import DialoguePlayer from "@/components/DialoguePlayer";
 import RoleplayDialogue from "@/components/RoleplayDialogue";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
 
 import LanguageSelector from "@/components/LanguageSelector";
 
@@ -34,12 +35,13 @@ interface DialogueScene {
 }
 
 interface VocabularyItem {
-  english: string;
-  translations: {
+  word: string;
+  translation: {
     tr: string;
     kg: string;
     ru: string;
   };
+  definition: string;
 }
 
 interface QuizQuestion {
@@ -78,13 +80,14 @@ interface Module {
 
 const ModuleDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const [selectedDialogue, setSelectedDialogue] = useState<Dialogue | null>(
     null,
   );
   const [activeTab, setActiveTab] = useState("dialogues");
   const [selectedLanguage, setSelectedLanguage] = useState("tr");
   const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
-  const [ttsLoading, setTtsLoading] = useState<Record<string, boolean>>({});
+  const { playText, loading: ttsPlayLoading } = useElevenLabsTTS();
 
   // Use the traffic stop course data
 
@@ -187,7 +190,9 @@ const ModuleDetailPage = () => {
   };
 
   const handleDialogueSelect = (dialogue: Dialogue) => {
-    setSelectedDialogue(dialogue);
+    // Navigate to the lesson page using URL-friendly dialogue title
+    const lessonId = dialogue.title.toLowerCase().replace(/\s+/g, "-");
+    navigate(`/lesson/${lessonId}`);
   };
 
   const handleBackToList = () => {
@@ -195,60 +200,12 @@ const ModuleDetailPage = () => {
   };
 
   const playVocabularyAudio = async (word: string) => {
-    setAudioLoading((prev) => ({ ...prev, [word]: true }));
-
     try {
       console.log("[Module] Playing vocabulary audio for word:", word);
-
-      const response = await fetch(
-        "https://pvstwthufbertinmojuk.functions.supabase.co/supabase-functions-text-to-speech",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ text: word }),
-        },
-      );
-
-      console.log(
-        "[Module] Response status:",
-        response.status,
-        response.statusText,
-      );
-
-      if (!response.ok) {
-        throw new Error(`TTS API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log("[Module] Full API response:", data);
-
-      // Check for different possible paths to the audio URL
-      const audioUrl = data?.audioUrl || data?.data?.audioUrl || data?.url;
-      console.log("[Module] Extracted audioUrl:", audioUrl);
-
-      if (!audioUrl) {
-        console.error(
-          "[Module] No audioUrl found in response. Full response:",
-          data,
-        );
-        throw new Error("No audioUrl returned from TTS API");
-      }
-
-      console.log("[Module] Creating Audio object with URL:", audioUrl);
-      const audio = new Audio(audioUrl);
-
-      console.log("[Module] Attempting to play audio...");
-      await audio.play();
+      await playText(word, `vocab-${word}`);
       console.log("[Module] Audio playback started successfully");
     } catch (err) {
       console.error("[Module] Error playing vocabulary audio:", err);
-    } finally {
-      // Set loading to false after processing
-      setTimeout(() => {
-        setAudioLoading((prev) => ({ ...prev, [word]: false }));
-      }, 500);
     }
   };
 
@@ -258,7 +215,10 @@ const ModuleDetailPage = () => {
         "[Module] Playing line audio:",
         text.substring(0, 30) + "...",
       );
-      await playVocabularyAudio(text);
+      await playText(
+        text,
+        `line-${text.substring(0, 10).replace(/\s+/g, "-")}`,
+      );
     } catch (error) {
       console.error("[Module] Error playing line audio:", error);
     }
@@ -278,7 +238,12 @@ const ModuleDetailPage = () => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               Back
             </Button>
-            <h1 className="text-xl font-bold">TruckTalk</h1>
+            <Link
+              to="/"
+              className="text-xl font-bold hover:text-primary transition-colors"
+            >
+              TruckTalk
+            </Link>
           </div>
           <div className="flex items-center space-x-4">
             <LanguageSelector
@@ -323,37 +288,43 @@ const ModuleDetailPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           {selectedDialogue.content.vocabulary.map(
                             (item, index) => (
-                              <div
+                              <Card
                                 key={index}
-                                className="border-b border-gray-200 pb-2 last:border-0 last:pb-0"
+                                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all duration-200 hover:shadow-md"
                               >
-                                <div className="flex justify-between items-center mb-1">
-                                  <span className="font-medium">
-                                    {item.english}
+                                <div className="flex justify-between items-center mb-2">
+                                  <span className="font-medium text-lg">
+                                    {item.word}
                                   </span>
                                   <Button
                                     variant="ghost"
                                     size="sm"
-                                    onClick={() => {
-                                      const utterance =
-                                        new SpeechSynthesisUtterance(
-                                          item.english,
-                                        );
-                                      utterance.lang = "en-US";
-                                      window.speechSynthesis.speak(utterance);
-                                    }}
+                                    onClick={() =>
+                                      playVocabularyAudio(item.word)
+                                    }
+                                    disabled={
+                                      ttsPlayLoading[`vocab-${item.word}`]
+                                    }
+                                    className="relative overflow-hidden group"
                                   >
-                                    <Volume2 className="h-4 w-4" />
+                                    {ttsPlayLoading[`vocab-${item.word}`] ? (
+                                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
+                                    ) : (
+                                      <>
+                                        <Volume2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                                        <span className="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full transition-transform duration-300"></span>
+                                      </>
+                                    )}
                                     <span className="sr-only">Play audio</span>
                                   </Button>
                                 </div>
-                                <p className="text-sm text-primary">
-                                  {item.translations &&
-                                    item.translations[
-                                      selectedLanguage as keyof typeof item.translations
+                                <p className="text-primary font-medium mb-1">
+                                  {item.translation &&
+                                    item.translation[
+                                      selectedLanguage as keyof typeof item.translation
                                     ]}
                                 </p>
-                              </div>
+                              </Card>
                             ),
                           )}
                         </div>
@@ -462,7 +433,7 @@ const ModuleDetailPage = () => {
 
                                           supabase.functions
                                             .invoke(
-                                              "supabase-functions-tts-service",
+                                              "supabase-functions-text-to-speech",
                                               {
                                                 body: { text: exchange.text },
                                               },
@@ -590,53 +561,184 @@ const ModuleDetailPage = () => {
                   )}
 
                   {/* Quiz Section */}
-                  {selectedDialogue.content?.quiz && (
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3">
-                        Knowledge Check
-                      </h3>
-                      <div className="space-y-6">
-                        {selectedDialogue.content.quiz.map(
-                          (question, qIndex) => (
-                            <div key={qIndex} className="border rounded-lg p-4">
-                              <p className="font-medium mb-3">
-                                {qIndex + 1}. {question.question}
-                              </p>
-                              <div className="space-y-2">
-                                {question.options.map((option, oIndex) => (
+                  <div>
+                    <h3 className="text-lg font-semibold mb-3 flex items-center">
+                      <BarChart className="h-5 w-5 mr-2 text-primary" />
+                      Knowledge Check
+                    </h3>
+                    <div className="space-y-6">
+                      {/* Step indicator */}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-sm font-medium">Progress</span>
+                          <div className="flex items-center space-x-1">
+                            {[1, 2, 3].map((step) => (
+                              <div
+                                key={step}
+                                className={`w-8 h-2 rounded-full ${step === 1 ? "bg-primary" : "bg-gray-200"}`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        <span className="text-sm text-gray-500">
+                          Question 1 of 3
+                        </span>
+                      </div>
+
+                      {/* Mock quiz data */}
+                      {[
+                        {
+                          question:
+                            "What documents should you provide when pulled over?",
+                          options: [
+                            "License only",
+                            "License and registration",
+                            "License, registration, and insurance",
+                            "Passport and visa",
+                          ],
+                          correctAnswer: 2,
+                        },
+                        {
+                          question:
+                            "What should you do with your hands when pulled over?",
+                          options: [
+                            "Keep them on the steering wheel",
+                            "Put them in your pockets",
+                            "Hold your phone to record",
+                            "Wave them to show you're friendly",
+                          ],
+                          correctAnswer: 0,
+                        },
+                        {
+                          question: "How should you address the officer?",
+                          options: [
+                            "By their first name",
+                            "As 'officer' or 'sir/ma'am'",
+                            "Don't address them at all",
+                            "As 'buddy' or 'friend'",
+                          ],
+                          correctAnswer: 1,
+                        },
+                      ].map((question, qIndex) => {
+                        const [selectedAnswer, setSelectedAnswer] = useState<
+                          number | null
+                        >(null);
+                        const [isAnswered, setIsAnswered] = useState(false);
+
+                        return (
+                          <div
+                            key={qIndex}
+                            className="border rounded-lg p-6 shadow-sm bg-white"
+                          >
+                            <p className="font-medium text-lg mb-4">
+                              {qIndex + 1}. {question.question}
+                            </p>
+                            <div className="space-y-3">
+                              {question.options.map((option, oIndex) => {
+                                const isSelected = selectedAnswer === oIndex;
+                                const isCorrect =
+                                  isAnswered &&
+                                  oIndex === question.correctAnswer;
+                                const isWrong =
+                                  isAnswered &&
+                                  isSelected &&
+                                  oIndex !== question.correctAnswer;
+
+                                return (
                                   <div
                                     key={oIndex}
-                                    className="flex items-center"
+                                    onClick={() =>
+                                      !isAnswered && setSelectedAnswer(oIndex)
+                                    }
+                                    className={`p-4 rounded-lg cursor-pointer flex items-center justify-between transition-all duration-200
+                                      ${isSelected && !isAnswered ? "bg-blue-50 border border-blue-300 shadow-sm" : "bg-slate-50 border border-slate-200 hover:border-slate-300"} 
+                                      ${isCorrect ? "bg-green-50 border-green-300 shadow-sm" : ""}
+                                      ${isWrong ? "bg-red-50 border-red-300 shadow-sm" : ""}`}
                                   >
-                                    <input
-                                      type="radio"
-                                      id={`q${qIndex}-o${oIndex}`}
-                                      name={`question-${qIndex}`}
-                                      className="mr-2"
-                                    />
-                                    <label htmlFor={`q${qIndex}-o${oIndex}`}>
+                                    <span className="font-medium">
                                       {option}
-                                    </label>
+                                    </span>
+                                    {isCorrect && (
+                                      <CheckCircle className="h-5 w-5 text-green-600 animate-fadeIn" />
+                                    )}
+                                    {isWrong && (
+                                      <X className="h-5 w-5 text-red-600 animate-fadeIn" />
+                                    )}
                                   </div>
-                                ))}
-                              </div>
+                                );
+                              })}
                             </div>
-                          ),
-                        )}
-                        <div className="flex justify-end">
-                          <Button>Check Answers</Button>
+                            {!isAnswered && selectedAnswer !== null && (
+                              <Button
+                                onClick={() => setIsAnswered(true)}
+                                className="mt-6 w-full"
+                              >
+                                Check Answer
+                              </Button>
+                            )}
+                            {isAnswered && (
+                              <div
+                                className={`mt-6 p-4 rounded-lg ${selectedAnswer === question.correctAnswer ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"}`}
+                              >
+                                <p
+                                  className={`flex items-center ${selectedAnswer === question.correctAnswer ? "text-green-700" : "text-red-700"}`}
+                                >
+                                  {selectedAnswer === question.correctAnswer ? (
+                                    <>
+                                      <CheckCircle className="h-5 w-5 mr-2" />
+                                      Correct! Well done.
+                                    </>
+                                  ) : (
+                                    <>
+                                      <AlertCircle className="h-5 w-5 mr-2" />
+                                      Incorrect. The correct answer is:{" "}
+                                      {question.options[question.correctAnswer]}
+                                    </>
+                                  )}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
+                        <h4 className="font-medium mb-3 flex items-center">
+                          <BarChart className="h-4 w-4 mr-2 text-primary" />
+                          Module Progress
+                        </h4>
+                        <Progress
+                          value={33}
+                          className="h-3 mb-3 rounded-full"
+                        />
+                        <div className="flex justify-between items-center">
+                          <p className="text-sm text-gray-500">
+                            1/3 modules completed
+                          </p>
+                          <Badge
+                            variant="outline"
+                            className="bg-primary/10 text-primary"
+                          >
+                            33% Complete
+                          </Badge>
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
 
                 <div className="flex justify-between">
-                  <Button variant="outline" onClick={handleBackToList}>
+                  <Button
+                    variant="outline"
+                    onClick={handleBackToList}
+                    className="transition-all duration-200 hover:bg-slate-50"
+                  >
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Back to Module
                   </Button>
-                  <Button onClick={() => setSelectedDialogue(null)}>
+                  <Button
+                    onClick={() => setSelectedDialogue(null)}
+                    className="transition-all duration-200 hover:scale-105 bg-green-600 hover:bg-green-700"
+                  >
                     <CheckCircle className="h-4 w-4 mr-2" />
                     Mark as Complete
                   </Button>
@@ -663,12 +765,12 @@ const ModuleDetailPage = () => {
                     translatedText: "",
                     vocabulary:
                       selectedDialogue.content?.vocabulary?.map((v) => ({
-                        word: v.english,
+                        word: v.word,
                         translation:
-                          v.translations[
-                            selectedLanguage as keyof typeof v.translations
+                          v.translation[
+                            selectedLanguage as keyof typeof v.translation
                           ] || "",
-                        definition: "",
+                        definition: v.definition || "",
                       })) || [],
                     exercises: [],
                   }}
@@ -729,19 +831,23 @@ const ModuleDetailPage = () => {
                   {moduleData.dialogues.map((dialogue) => (
                     <Card
                       key={dialogue.id}
-                      className={`cursor-pointer transition-all hover:shadow-md ${dialogue.completed ? "border-green-200" : ""}`}
+                      className={`cursor-pointer transition-all hover:shadow-md ${dialogue.completed ? "border-green-200 bg-green-50/30" : ""}`}
                       onClick={() => handleDialogueSelect(dialogue)}
                     >
-                      <CardContent className="p-4">
+                      <CardContent className="p-5">
                         <div className="flex items-start justify-between">
                           <div className="space-y-2">
                             <div className="flex items-center space-x-2">
-                              <h3 className="font-medium">{dialogue.title}</h3>
+                              <h3 className="font-medium text-lg">
+                                {dialogue.title}
+                              </h3>
                               {dialogue.completed && (
-                                <CheckCircle className="h-4 w-4 text-green-500" />
+                                <div className="bg-green-100 p-1 rounded-full">
+                                  <CheckCircle className="h-4 w-4 text-green-600" />
+                                </div>
                               )}
                             </div>
-                            <p className="text-sm text-gray-500">
+                            <p className="text-sm text-gray-600">
                               {dialogue.description}
                             </p>
                             <div className="flex items-center space-x-4 pt-2">
@@ -755,6 +861,9 @@ const ModuleDetailPage = () => {
                                 {dialogue.difficulty}
                               </div>
                             </div>
+                          </div>
+                          <div className="bg-slate-100 hover:bg-slate-200 transition-colors p-2 rounded-full">
+                            <ArrowLeft className="h-4 w-4 rotate-180" />
                           </div>
                         </div>
                       </CardContent>
@@ -776,26 +885,32 @@ const ModuleDetailPage = () => {
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {moduleData.dialogues[0].content.vocabulary.map(
                               (item, index) => (
-                                <div
+                                <Card
                                   key={index}
-                                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                                  className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-all duration-200 hover:shadow-md"
                                 >
                                   <div className="flex justify-between items-center mb-2">
                                     <span className="font-medium text-lg">
-                                      {item.english}
+                                      {item.word}
                                     </span>
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       onClick={() =>
-                                        playVocabularyAudio(item.english)
+                                        playVocabularyAudio(item.word)
                                       }
-                                      disabled={audioLoading[item.english]}
+                                      disabled={
+                                        ttsPlayLoading[`vocab-${item.word}`]
+                                      }
+                                      className="relative overflow-hidden group"
                                     >
-                                      {audioLoading[item.english] ? (
-                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></span>
+                                      {ttsPlayLoading[`vocab-${item.word}`] ? (
+                                        <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                                       ) : (
-                                        <Volume2 className="h-4 w-4" />
+                                        <>
+                                          <Volume2 className="h-4 w-4 group-hover:scale-110 transition-transform" />
+                                          <span className="absolute inset-0 bg-primary/5 scale-0 group-hover:scale-100 rounded-full transition-transform duration-300"></span>
+                                        </>
                                       )}
                                       <span className="sr-only">
                                         Play audio
@@ -803,9 +918,9 @@ const ModuleDetailPage = () => {
                                     </Button>
                                   </div>
                                   <p className="text-primary font-medium mb-1">
-                                    {item.translations &&
-                                      item.translations[
-                                        selectedLanguage as keyof typeof item.translations
+                                    {item.translation &&
+                                      item.translation[
+                                        selectedLanguage as keyof typeof item.translation
                                       ]}
                                   </p>
                                   {item.definition && (
@@ -813,7 +928,7 @@ const ModuleDetailPage = () => {
                                       {item.definition}
                                     </p>
                                   )}
-                                </div>
+                                </Card>
                               ),
                             )}
                           </div>

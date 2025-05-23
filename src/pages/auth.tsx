@@ -1,5 +1,5 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import AuthForm from "@/components/auth/AuthForm";
@@ -20,7 +20,12 @@ const AuthPage = () => {
               <ArrowLeft className="h-5 w-5 mr-2" />
               {t("button.back")}
             </Button>
-            <h1 className="text-xl font-bold">TruckTalk</h1>
+            <Link
+              to="/"
+              className="text-xl font-bold hover:text-primary transition-colors"
+            >
+              TruckTalk
+            </Link>
           </div>
           <div>
             <LanguageSelector />

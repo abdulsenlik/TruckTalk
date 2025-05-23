@@ -18,7 +18,6 @@ import { Progress } from "./ui/progress";
 import ModuleCard from "./ModuleCard";
 import LanguageSelector, { useLanguage } from "./LanguageSelector";
 import UserAuthButton from "./UserAuthButton";
-import SubscriptionPlans from "./SubscriptionPlans";
 
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
@@ -29,7 +28,7 @@ const modules = trafficStopCourse.map((section, index) => ({
   dialogues: section.dialogues.length,
   completion: 0,
   image: getImageForSection(section.id),
-  difficulty: index < 2 ? "Beginner" : index < 4 ? "Intermediate" : "Advanced",
+  difficulty: index < 3 ? "Beginner" : index < 7 ? "Intermediate" : "Advanced",
 }));
 
 // Helper function to get appropriate image for each section
@@ -125,10 +124,10 @@ const Home = () => {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Globe className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">TruckTalk</span>
-          </div>
+          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
@@ -152,6 +151,12 @@ const Home = () => {
               className="text-sm font-medium hover:text-primary"
             >
               {t("nav.emergency")}
+            </Link>
+            <Link
+              to="/pricing"
+              className="text-sm font-medium hover:text-primary"
+            >
+              Pricing
             </Link>
             <div className="flex items-center gap-2">
               <LanguageSelector />
@@ -197,6 +202,12 @@ const Home = () => {
               className="text-sm font-medium hover:text-primary"
             >
               {t("nav.emergency")}
+            </Link>
+            <Link
+              to="/pricing"
+              className="text-sm font-medium hover:text-primary"
+            >
+              Pricing
             </Link>
             <LanguageSelector />
             <UserAuthButton />
@@ -255,9 +266,6 @@ const Home = () => {
             ))}
           </div>
         </section>
-
-        {/* Subscription Tiers */}
-        <SubscriptionPlans />
 
         {/* Emergency Phrases */}
         <section className="space-y-6 py-8 bg-muted/50 rounded-lg p-6">
