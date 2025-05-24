@@ -11,7 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import ModuleCard from "@/components/ModuleCard";
-import LanguageSelector from "@/components/LanguageSelector";
+import LanguageSelector, { useLanguage } from "@/components/LanguageSelector";
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
 // Helper function to get appropriate image for each section
@@ -60,9 +60,9 @@ const modules = trafficStopCourse.map((section, index) => ({
 
 const ModulesPage = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [searchQuery, setSearchQuery] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
-  const [selectedLanguage, setSelectedLanguage] = useState("tr");
 
   const filteredModules = modules.filter((module) => {
     const matchesSearch = module.title
@@ -82,7 +82,7 @@ const ModulesPage = () => {
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
               <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
+              {t("button.back")}
             </Button>
             <Link
               to="/"
@@ -91,14 +91,11 @@ const ModulesPage = () => {
               TruckTalk
             </Link>
             <span className="text-xl font-bold text-muted-foreground">
-              / Learning Modules
+              / {t("nav.modules")}
             </span>
           </div>
           <div className="flex items-center space-x-4">
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-            />
+            <LanguageSelector />
           </div>
         </div>
       </header>
@@ -109,7 +106,7 @@ const ModulesPage = () => {
           <div className="relative flex-grow">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search modules..."
+              placeholder={t("modules.search") || "Search modules..."}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -123,14 +120,26 @@ const ModulesPage = () => {
               <SelectTrigger className="w-full">
                 <div className="flex items-center">
                   <Filter className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Filter by difficulty" />
+                  <SelectValue
+                    placeholder={
+                      t("modules.filterByDifficulty") || "Filter by difficulty"
+                    }
+                  />
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Levels</SelectItem>
-                <SelectItem value="beginner">Beginner</SelectItem>
-                <SelectItem value="intermediate">Intermediate</SelectItem>
-                <SelectItem value="advanced">Advanced</SelectItem>
+                <SelectItem value="all">
+                  {t("modules.allLevels") || "All Levels"}
+                </SelectItem>
+                <SelectItem value="beginner">
+                  {t("modules.beginner") || "Beginner"}
+                </SelectItem>
+                <SelectItem value="intermediate">
+                  {t("modules.intermediate") || "Intermediate"}
+                </SelectItem>
+                <SelectItem value="advanced">
+                  {t("modules.advanced") || "Advanced"}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -157,7 +166,8 @@ const ModulesPage = () => {
         ) : (
           <div className="text-center py-12">
             <p className="text-lg text-muted-foreground">
-              No modules found matching your search criteria.
+              {t("modules.noResults") ||
+                "No modules found matching your search criteria."}
             </p>
           </div>
         )}

@@ -154,14 +154,16 @@ const SubscriptionPlans = () => {
             >
               {plan.popular && (
                 <div className="absolute top-0 right-0 bg-primary text-white text-xs font-semibold px-3 py-1 rounded-bl-lg">
-                  Most Popular
+                  {t("subscription.mostPopular") || "Most Popular"}
                 </div>
               )}
               <CardHeader>
                 <CardTitle className="text-xl">{plan.name}</CardTitle>
                 <div className="mt-2">
                   <span className="text-3xl font-bold">{plan.price}</span>
-                  <span className="text-gray-500 ml-1">/month</span>
+                  <span className="text-gray-500 ml-1">
+                    {t("subscription.perMonth") || "/month"}
+                  </span>
                 </div>
                 <p className="text-sm text-gray-500 mt-2">{plan.description}</p>
               </CardHeader>

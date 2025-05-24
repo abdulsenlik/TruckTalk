@@ -99,7 +99,7 @@ const UserAuthButton = () => {
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleSignOut}>
           <LogOut className="mr-2 h-4 w-4" />
-          {t("auth.logout") || "Logout"}
+          {t("auth.logout")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

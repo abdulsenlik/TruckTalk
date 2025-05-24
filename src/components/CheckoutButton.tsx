@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useLanguage } from "./LanguageSelector";
 import { Button } from "@/components/ui/button";
 import { createCheckoutSession } from "@/lib/stripe";
 import { useToast } from "@/components/ui/use-toast";
@@ -28,6 +29,7 @@ const CheckoutButton = ({
 }: CheckoutButtonProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useLanguage();
 
   // Skip checkout for free tier
   if (priceId === "free") {
@@ -57,9 +59,10 @@ const CheckoutButton = ({
     } catch (error) {
       console.error("Checkout error:", error);
       toast({
-        title: "Checkout Error",
-        description:
-          "There was a problem starting the checkout process. Please try again.",
+        title: t ? t("checkout.error") : "Checkout Error",
+        description: t
+          ? t("checkout.errorDescription")
+          : "There was a problem starting the checkout process. Please try again.",
         variant: "destructive",
       });
     } finally {

@@ -55,7 +55,7 @@ const PricingPage = () => {
               variant="ghost"
               className="text-sm font-medium text-primary border-b-2 border-primary"
             >
-              Pricing
+              {t("nav.pricing")}
             </Button>
             <div className="flex items-center gap-2">
               <LanguageSelector />
@@ -113,7 +113,7 @@ const PricingPage = () => {
               variant="ghost"
               className="text-sm font-medium text-primary text-left justify-start"
             >
-              Pricing
+              {t("nav.pricing")}
             </Button>
             <LanguageSelector />
             <UserAuthButton />
@@ -125,23 +125,21 @@ const PricingPage = () => {
         {/* Hero Section */}
         <section className="py-12 md:py-16 lg:py-20 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6">
-            Choose Your Plan
+            {t("subscription.title")}
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Select the subscription plan that best fits your learning needs.
-            Start with our free tier or upgrade for premium features and
-            enhanced learning experience.
+            {t("subscription.subtitle")}
           </p>
           <div className="flex flex-wrap justify-center gap-4">
             <Button size="lg" variant="outline" asChild>
               <Button onClick={() => navigate("/")} className="text-black-500">
                 <ArrowLeft className="h-4 w-4 mr-2 " />
-                Back to Home
+                {t("button.back")}
               </Button>
             </Button>
             <Button size="lg" asChild>
               <Button onClick={() => navigate("/modules")}>
-                Start Learning
+                {t("button.startLearning")}
               </Button>
             </Button>
           </div>
@@ -166,7 +164,7 @@ const PricingPage = () => {
               </p>
             </div>
             <div>
-              <h3 className="font-medium mb-4">Quick Links</h3>
+              <h3 className="font-medium mb-4">{t("footer.quickLinks")}</h3>
               <ul className="space-y-2">
                 <li>
                   <Button
@@ -174,7 +172,7 @@ const PricingPage = () => {
                     onClick={() => navigate("/")}
                     className="text-muted-foreground hover:text-foreground p-0 h-auto"
                   >
-                    Home
+                    {t("nav.home")}
                   </Button>
                 </li>
                 <li>
@@ -183,7 +181,7 @@ const PricingPage = () => {
                     onClick={() => navigate("/modules")}
                     className="text-muted-foreground hover:text-foreground p-0 h-auto"
                   >
-                    Modules
+                    {t("nav.modules")}
                   </Button>
                 </li>
                 <li>
@@ -192,7 +190,7 @@ const PricingPage = () => {
                     onClick={() => navigate("/progress")}
                     className="text-muted-foreground hover:text-foreground p-0 h-auto"
                   >
-                    Progress
+                    {t("nav.progress")}
                   </Button>
                 </li>
                 <li>
@@ -201,26 +199,32 @@ const PricingPage = () => {
                     onClick={() => navigate("/emergency")}
                     className="text-muted-foreground hover:text-foreground p-0 h-auto"
                   >
-                    Emergency
+                    {t("nav.emergency")}
                   </Button>
                 </li>
               </ul>
             </div>
             <div>
-              <h3 className="font-medium mb-4">Support</h3>
+              <h3 className="font-medium mb-4">{t("footer.support")}</h3>
               <ul className="space-y-2">
                 <li>
-                  <span className="text-muted-foreground">Help Center</span>
-                </li>
-                <li>
-                  <span className="text-muted-foreground">Contact Us</span>
-                </li>
-                <li>
-                  <span className="text-muted-foreground">Privacy Policy</span>
+                  <span className="text-muted-foreground">
+                    {t("footer.helpCenter")}
+                  </span>
                 </li>
                 <li>
                   <span className="text-muted-foreground">
-                    Terms of Service
+                    {t("footer.contactUs")}
+                  </span>
+                </li>
+                <li>
+                  <span className="text-muted-foreground">
+                    {t("footer.privacyPolicy")}
+                  </span>
+                </li>
+                <li>
+                  <span className="text-muted-foreground">
+                    {t("footer.termsOfService")}
                   </span>
                 </li>
               </ul>
@@ -228,7 +232,7 @@ const PricingPage = () => {
           </div>
           <div className="mt-8 pt-8 border-t text-center text-muted-foreground">
             <p>
-              &copy; {new Date().getFullYear()} TruckTalk. All rights reserved.
+              &copy; {new Date().getFullYear()} TruckTalk. {t("footer.rights")}
             </p>
           </div>
         </div>
