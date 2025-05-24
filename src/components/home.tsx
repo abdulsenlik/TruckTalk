@@ -21,16 +21,6 @@ import UserAuthButton from "./UserAuthButton";
 
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
-const modules = trafficStopCourse.map((section, index) => ({
-  id: section.id,
-  title: section.title,
-  description: section.description,
-  dialogues: section.dialogues.length,
-  completion: 0,
-  image: getImageForSection(section.id),
-  difficulty: index < 3 ? "Beginner" : index < 7 ? "Intermediate" : "Advanced",
-}));
-
 // Helper function to get appropriate image for each section
 function getImageForSection(sectionId: string): string {
   switch (sectionId) {
@@ -50,6 +40,16 @@ function getImageForSection(sectionId: string): string {
       return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=600&q=80";
   }
 }
+
+const modules = trafficStopCourse.map((section, index) => ({
+  id: section.id,
+  title: section.title,
+  description: section.description,
+  dialogues: section.dialogues.length,
+  completion: 0,
+  image: getImageForSection(section.id),
+  difficulty: index < 3 ? "Beginner" : index < 7 ? "Intermediate" : "Advanced",
+}));
 
 const emergencyPhrases = [
   {

@@ -1,6 +1,7 @@
 import { Suspense, lazy, useEffect } from "react";
 import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./components/home";
+import SimpleHome from "./components/SimpleHome";
 import routes from "tempo-routes";
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
@@ -48,7 +49,7 @@ function App() {
     >
       <>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<SimpleHome />} />
           <Route path="/module/:id" element={<ModuleDetailPage />} />
           <Route path="/lesson/:id" element={<LessonDetailPage />} />
           <Route path="/modules" element={<ModulesPage />} />
