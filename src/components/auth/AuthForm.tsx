@@ -78,22 +78,22 @@ const AuthForm = () => {
       if (error) {
         toast({
           variant: "destructive",
-          title: "Login failed",
+          title: t("auth.loginFailed"),
           description: error.message,
         });
         return;
       }
 
       toast({
-        title: "Login successful",
-        description: "Welcome back to TruckTalk!",
+        title: t("auth.loginSuccessful"),
+        description: t("auth.welcomeBack"),
       });
       navigate("/");
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Something went wrong",
-        description: "Please try again later.",
+        title: t("auth.somethingWrong"),
+        description: t("auth.tryAgain"),
       });
     } finally {
       setIsLoading(false);
@@ -116,22 +116,22 @@ const AuthForm = () => {
       if (error) {
         toast({
           variant: "destructive",
-          title: "Signup failed",
+          title: t("auth.signupFailed"),
           description: error.message,
         });
         return;
       }
 
       toast({
-        title: "Signup successful",
-        description: "Please check your email to verify your account.",
+        title: t("auth.signupSuccessful"),
+        description: t("auth.checkEmail"),
       });
       setActiveTab("login");
     } catch (error) {
       toast({
         variant: "destructive",
-        title: "Something went wrong",
-        description: "Please try again later.",
+        title: t("auth.somethingWrong"),
+        description: t("auth.tryAgain"),
       });
     } finally {
       setIsLoading(false);
@@ -180,10 +180,10 @@ const AuthForm = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t("auth.email")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="you@example.com"
+                        placeholder={t("auth.emailPlaceholder")}
                         type="email"
                         {...field}
                       />
@@ -198,10 +198,10 @@ const AuthForm = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t("auth.password")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="••••••••"
+                        placeholder={t("auth.passwordPlaceholder")}
                         type="password"
                         {...field}
                       />
@@ -212,7 +212,7 @@ const AuthForm = () => {
               />
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : t("auth.login")}
+                {isLoading ? t("auth.loggingIn") : t("auth.login")}
               </Button>
             </form>
           </Form>
@@ -229,7 +229,7 @@ const AuthForm = () => {
                 name="name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>{t("auth.name")}</FormLabel>
                     <FormControl>
                       <Input placeholder="John Doe" {...field} />
                     </FormControl>
@@ -243,10 +243,10 @@ const AuthForm = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>{t("auth.email")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="you@example.com"
+                        placeholder={t("auth.emailPlaceholder")}
                         type="email"
                         {...field}
                       />
@@ -261,10 +261,10 @@ const AuthForm = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Password</FormLabel>
+                    <FormLabel>{t("auth.password")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="••••••••"
+                        placeholder={t("auth.passwordPlaceholder")}
                         type="password"
                         {...field}
                       />
@@ -279,10 +279,10 @@ const AuthForm = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Confirm Password</FormLabel>
+                    <FormLabel>{t("auth.confirmPassword")}</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="••••••••"
+                        placeholder={t("auth.passwordPlaceholder")}
                         type="password"
                         {...field}
                       />
@@ -293,7 +293,7 @@ const AuthForm = () => {
               />
 
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Creating account..." : t("auth.signup")}
+                {isLoading ? t("auth.creatingAccount") : t("auth.signup")}
               </Button>
             </form>
           </Form>

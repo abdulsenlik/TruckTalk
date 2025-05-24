@@ -55,7 +55,7 @@ interface LessonData {
 const LessonDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [selectedLanguage, setSelectedLanguage] = useState("tr");
+  const { language, t } = useLanguage();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const { playText, loading: ttsPlayLoading } = useElevenLabsTTS();
 
@@ -128,13 +128,15 @@ const LessonDetailPage = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Lesson Not Found</h1>
+          <h1 className="text-2xl font-bold mb-4">
+            {t("lesson.lessonNotFound")}
+          </h1>
           <p className="text-gray-600 mb-6">
-            The lesson you're looking for doesn't exist.
+            {t("lesson.lessonNotFoundDescription")}
           </p>
           <Button onClick={() => navigate("/modules")}>
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Modules
+            {t("button.back")} {t("nav.modules")}
           </Button>
         </div>
       </div>
@@ -205,7 +207,7 @@ const LessonDetailPage = () => {
               onClick={() => navigate(`/module/${lessonData.moduleId}`)}
             >
               <ArrowLeft className="h-5 w-5 mr-2" />
-              Back to Module
+              {t("lesson.backToModule")}
             </Button>
             <div>
               <Link
@@ -218,10 +220,7 @@ const LessonDetailPage = () => {
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-            />
+            <LanguageSelector />
           </div>
         </div>
       </header>
@@ -237,11 +236,10 @@ const LessonDetailPage = () => {
               <div className="flex items-center space-x-4">
                 <div className="flex items-center text-sm text-gray-500">
                   <Clock className="h-4 w-4 mr-1" />
-                  {lessonData.estimatedTime} min
+                  {lessonData.estimatedTime} {t("lesson.estimatedTime")}
                 </div>
                 <Badge variant="outline">
-                  {lessonData.difficulty.charAt(0).toUpperCase() +
-                    lessonData.difficulty.slice(1)}
+                  {t(`modules.${lessonData.difficulty}`)}
                 </Badge>
               </div>
             </div>
@@ -250,7 +248,7 @@ const LessonDetailPage = () => {
             <div className="mb-8">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <BookOpen className="h-5 w-5 mr-2 text-primary" />
-                Vocabulary
+                {t("modules.vocabulary")}
               </h3>
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -282,7 +280,7 @@ const LessonDetailPage = () => {
                       <p className="text-primary font-medium mb-1">
                         {item.translation &&
                           item.translation[
-                            selectedLanguage as keyof typeof item.translation
+                            language as keyof typeof item.translation
                           ]}
                       </p>
                       <p className="text-sm text-gray-600">{item.definition}</p>
@@ -294,13 +292,17 @@ const LessonDetailPage = () => {
 
             {/* Dialogues Section */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">Practice Dialogues</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {t("modules.practiceDialogues")}
+              </h3>
               <Tabs defaultValue="dialogue" className="w-full">
                 <TabsList className="mb-4">
-                  <TabsTrigger value="dialogue">Dialogue Practice</TabsTrigger>
+                  <TabsTrigger value="dialogue">
+                    {t("modules.dialoguePractice")}
+                  </TabsTrigger>
                   <TabsTrigger value="roleplay">
                     <MessageSquare className="h-4 w-4 mr-1" />
-                    AI Roleplay
+                    {t("modules.aiRoleplay")}
                   </TabsTrigger>
                 </TabsList>
 
@@ -357,11 +359,15 @@ const LessonDetailPage = () => {
                     description="Practice responding in this scenario. You play the driver."
                     exchanges={lessonData.dialogues[0].exchanges}
                     nativeLanguage={
-                      selectedLanguage === "tr"
+                      language === "tr"
                         ? "turkish"
-                        : selectedLanguage === "kg"
+                        : language === "kg"
                           ? "kyrgyz"
-                          : "russian"
+                          : language === "zh"
+                            ? "chinese"
+                            : language === "es"
+                              ? "spanish"
+                              : "russian"
                     }
                     onComplete={() => {}}
                   />
@@ -373,7 +379,7 @@ const LessonDetailPage = () => {
             <div className="mb-8">
               <h3 className="text-lg font-semibold mb-4 flex items-center">
                 <AlertCircle className="h-5 w-5 mr-2 text-amber-500" />
-                Cultural Tips
+                {t("modules.culturalTips")}
               </h3>
               <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
                 <ul className="space-y-2">
@@ -389,7 +395,9 @@ const LessonDetailPage = () => {
 
             {/* Quiz Section */}
             <div className="mb-8">
-              <h3 className="text-lg font-semibold mb-4">Knowledge Check</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                {t("modules.knowledgeCheck")}
+              </h3>
               <div className="space-y-6">
                 {mockQuizQuestions.map((question, qIndex) => {
                   const [selectedAnswer, setSelectedAnswer] = useState<
@@ -442,7 +450,7 @@ const LessonDetailPage = () => {
                           onClick={() => setIsAnswered(true)}
                           className="mt-6 w-full"
                         >
-                          Check Answer
+                          {t("modules.checkAnswer")}
                         </Button>
                       )}
                       {isAnswered && (
@@ -463,12 +471,12 @@ const LessonDetailPage = () => {
                             {selectedAnswer === question.correctAnswer ? (
                               <>
                                 <CheckCircle className="h-5 w-5 mr-2" />
-                                Correct! Well done.
+                                {t("modules.correctAnswer")}
                               </>
                             ) : (
                               <>
                                 <AlertCircle className="h-5 w-5 mr-2" />
-                                Incorrect. The correct answer is:{" "}
+                                {t("modules.incorrectAnswer")}
                                 {question.options[question.correctAnswer]}
                               </>
                             )}
@@ -483,15 +491,19 @@ const LessonDetailPage = () => {
 
             {/* Progress Section */}
             <div className="bg-slate-50 p-6 rounded-lg border border-slate-200">
-              <h4 className="font-medium mb-3">Lesson Progress</h4>
+              <h4 className="font-medium mb-3">
+                {t("progress.lessonProgress")}
+              </h4>
               <Progress value={100} className="h-3 mb-3 rounded-full" />
               <div className="flex justify-between items-center">
-                <p className="text-sm text-gray-500">Lesson completed</p>
+                <p className="text-sm text-gray-500">
+                  {t("progress.lessonCompleted")}
+                </p>
                 <Badge
                   variant="outline"
                   className="bg-green-100 text-green-700"
                 >
-                  Complete
+                  {t("progress.complete")}
                 </Badge>
               </div>
             </div>
@@ -511,7 +523,7 @@ const LessonDetailPage = () => {
               className="bg-green-600 hover:bg-green-700"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
-              Mark as Complete
+              {t("modules.markComplete")}
             </Button>
           </div>
         </div>

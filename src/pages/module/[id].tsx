@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
 
-import LanguageSelector from "@/components/LanguageSelector";
+import LanguageSelector, { useLanguage } from "@/components/LanguageSelector";
 
 interface DialogueExchange {
   speaker: string;
@@ -86,7 +86,7 @@ const ModuleDetailPage = () => {
     null,
   );
   const [activeTab, setActiveTab] = useState("dialogues");
-  const [selectedLanguage, setSelectedLanguage] = useState("tr");
+  const { language, t } = useLanguage();
   const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
   const { playText, loading: ttsPlayLoading } = useElevenLabsTTS();
 
@@ -231,13 +231,9 @@ const ModuleDetailPage = () => {
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => window.history.back()}
-            >
+            <Button variant="outline" onClick={() => navigate("/modules")}>
               <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
+              {t("button.back")}
             </Button>
             <Link
               to="/"
@@ -247,10 +243,7 @@ const ModuleDetailPage = () => {
             </Link>
           </div>
           <div className="flex items-center space-x-4">
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-            />
+            <LanguageSelector />
           </div>
         </div>
       </header>
@@ -322,7 +315,7 @@ const ModuleDetailPage = () => {
                                 <p className="text-primary font-medium mb-1">
                                   {item.translation &&
                                     item.translation[
-                                      selectedLanguage as keyof typeof item.translation
+                                      language as keyof typeof item.translation
                                     ]}
                                 </p>
                               </Card>
@@ -337,7 +330,7 @@ const ModuleDetailPage = () => {
                   {selectedDialogue.content.dialogues && (
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-3">
-                        Practice Dialogues
+                        {t("modules.practiceDialogues")}
                       </h3>
                       <Tabs
                         defaultValue={selectedDialogue.content.dialogues[0].title
@@ -361,7 +354,7 @@ const ModuleDetailPage = () => {
                             "Being Pulled Over" && (
                             <TabsTrigger value="roleplay">
                               <MessageSquare className="h-4 w-4 mr-1" />
-                              AI Roleplay
+                              {t("modules.aiRoleplay")}
                             </TabsTrigger>
                           )}
                         </TabsList>
@@ -504,7 +497,7 @@ const ModuleDetailPage = () => {
                                   }}
                                 >
                                   <Volume2 className="h-4 w-4 mr-2" />
-                                  Play Full Dialogue
+                                  {t("lesson.playFullDialogue")}
                                 </Button>
                               </div>
                             </TabsContent>
@@ -525,11 +518,15 @@ const ModuleDetailPage = () => {
                                 selectedDialogue.content.dialogues[0].exchanges
                               }
                               nativeLanguage={
-                                selectedLanguage === "tr"
+                                language === "tr"
                                   ? "turkish"
-                                  : selectedLanguage === "kg"
+                                  : language === "kg"
                                     ? "kyrgyz"
-                                    : "russian"
+                                    : language === "zh"
+                                      ? "chinese"
+                                      : language === "es"
+                                        ? "spanish"
+                                        : "russian"
                               }
                               onComplete={() => {}}
                             />
@@ -544,7 +541,7 @@ const ModuleDetailPage = () => {
                     <div className="mb-8">
                       <h3 className="text-lg font-semibold mb-3 flex items-center">
                         <AlertCircle className="h-5 w-5 mr-2 text-amber-500" />
-                        Cultural Tips
+                        {t("modules.culturalTips")}
                       </h3>
                       <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
                         <ul className="space-y-2">
@@ -565,13 +562,15 @@ const ModuleDetailPage = () => {
                   <div>
                     <h3 className="text-lg font-semibold mb-3 flex items-center">
                       <BarChart className="h-5 w-5 mr-2 text-primary" />
-                      Knowledge Check
+                      {t("modules.knowledgeCheck")}
                     </h3>
                     <div className="space-y-6">
                       {/* Step indicator */}
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center space-x-2">
-                          <span className="text-sm font-medium">Progress</span>
+                          <span className="text-sm font-medium">
+                            {t("progress.overall")}
+                          </span>
                           <div className="flex items-center space-x-1">
                             {[1, 2, 3].map((step) => (
                               <div
@@ -582,7 +581,7 @@ const ModuleDetailPage = () => {
                           </div>
                         </div>
                         <span className="text-sm text-gray-500">
-                          Question 1 of 3
+                          {t("modules.questionCount", { current: 1, total: 3 })}
                         </span>
                       </div>
 
@@ -674,7 +673,7 @@ const ModuleDetailPage = () => {
                                 onClick={() => setIsAnswered(true)}
                                 className="mt-6 w-full"
                               >
-                                Check Answer
+                                {t("modules.checkAnswer")}
                               </Button>
                             )}
                             {isAnswered && (
@@ -687,12 +686,12 @@ const ModuleDetailPage = () => {
                                   {selectedAnswer === question.correctAnswer ? (
                                     <>
                                       <CheckCircle className="h-5 w-5 mr-2" />
-                                      Correct! Well done.
+                                      {t("modules.correctAnswer")}
                                     </>
                                   ) : (
                                     <>
                                       <AlertCircle className="h-5 w-5 mr-2" />
-                                      Incorrect. The correct answer is:{" "}
+                                      {t("modules.incorrectAnswer")}
                                       {question.options[question.correctAnswer]}
                                     </>
                                   )}
@@ -705,7 +704,7 @@ const ModuleDetailPage = () => {
                       <div className="mt-8 bg-slate-50 p-6 rounded-lg border border-slate-200">
                         <h4 className="font-medium mb-3 flex items-center">
                           <BarChart className="h-4 w-4 mr-2 text-primary" />
-                          Module Progress
+                          {t("progress.moduleProgress")}
                         </h4>
                         <Progress
                           value={33}
@@ -713,13 +712,16 @@ const ModuleDetailPage = () => {
                         />
                         <div className="flex justify-between items-center">
                           <p className="text-sm text-gray-500">
-                            1/3 modules completed
+                            {t("progress.modulesCompletedCount", {
+                              completed: 1,
+                              total: 3,
+                            })}
                           </p>
                           <Badge
                             variant="outline"
                             className="bg-primary/10 text-primary"
                           >
-                            33% Complete
+                            33% {t("progress.complete")}
                           </Badge>
                         </div>
                       </div>
@@ -730,18 +732,18 @@ const ModuleDetailPage = () => {
                 <div className="flex justify-between">
                   <Button
                     variant="outline"
-                    onClick={handleBackToList}
+                    onClick={() => navigate("/modules")}
                     className="transition-all duration-200 hover:bg-slate-50"
                   >
                     <ArrowLeft className="h-4 w-4 mr-2" />
-                    Back to Module
+                    {t("button.back")} {t("nav.modules")}
                   </Button>
                   <Button
                     onClick={() => setSelectedDialogue(null)}
                     className="transition-all duration-200 hover:scale-105 bg-green-600 hover:bg-green-700"
                   >
                     <CheckCircle className="h-4 w-4 mr-2" />
-                    Mark as Complete
+                    {t("modules.markComplete")}
                   </Button>
                 </div>
               </div>
@@ -769,18 +771,22 @@ const ModuleDetailPage = () => {
                         word: v.word,
                         translation:
                           v.translation[
-                            selectedLanguage as keyof typeof v.translation
+                            language as keyof typeof v.translation
                           ] || "",
                         definition: v.definition || "",
                       })) || [],
                     exercises: [],
                   }}
                   nativeLanguage={
-                    selectedLanguage === "tr"
+                    language === "tr"
                       ? "turkish"
-                      : selectedLanguage === "kg"
+                      : language === "kg"
                         ? "kyrgyz"
-                        : "russian"
+                        : language === "zh"
+                          ? "chinese"
+                          : language === "es"
+                            ? "spanish"
+                            : "russian"
                   }
                   onComplete={() => setSelectedDialogue(null)}
                 />
@@ -802,15 +808,11 @@ const ModuleDetailPage = () => {
                 <h1 className="text-2xl font-bold">{moduleData.title}</h1>
                 <p className="text-gray-600">{moduleData.description}</p>
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">
-                      Progress: {moduleData.completedDialogues} of{" "}
-                      {moduleData.totalDialogues} dialogues completed
-                    </span>
-                    <span className="text-sm font-medium">
-                      {completionPercentage}%
-                    </span>
-                  </div>
+                  <span className="text-sm text-gray-500">
+                    {t("progress.overall")}: {moduleData.completedDialogues}{" "}
+                    {t("module.of")} {moduleData.totalDialogues}{" "}
+                    {t("module.totalDialogues")} {t("module.completed")}
+                  </span>
                   <Progress value={completionPercentage} className="h-2" />
                 </div>
               </div>
@@ -823,9 +825,15 @@ const ModuleDetailPage = () => {
               onValueChange={setActiveTab}
             >
               <TabsList className="grid w-full md:w-auto grid-cols-2 md:grid-cols-3">
-                <TabsTrigger value="dialogues">Dialogues</TabsTrigger>
-                <TabsTrigger value="vocabulary">Vocabulary</TabsTrigger>
-                <TabsTrigger value="resources">Resources</TabsTrigger>
+                <TabsTrigger value="dialogues">
+                  {t("modules.dialogues")}
+                </TabsTrigger>
+                <TabsTrigger value="vocabulary">
+                  {t("modules.vocabulary")}
+                </TabsTrigger>
+                <TabsTrigger value="resources">
+                  {t("modules.resources")}
+                </TabsTrigger>
               </TabsList>
               <TabsContent value="dialogues" className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -854,12 +862,13 @@ const ModuleDetailPage = () => {
                             <div className="flex items-center space-x-4 pt-2">
                               <div className="flex items-center text-xs text-gray-500">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {dialogue.estimatedTime} min
+                                {dialogue.estimatedTime}{" "}
+                                {t("lesson.estimatedTime")}
                               </div>
                               <div
                                 className={`text-xs px-2 py-1 rounded-full ${getDifficultyColor(dialogue.difficulty)}`}
                               >
-                                {dialogue.difficulty}
+                                {t(`modules.${dialogue.difficulty}`)}
                               </div>
                             </div>
                           </div>
@@ -877,7 +886,7 @@ const ModuleDetailPage = () => {
                   <CardContent className="p-6">
                     <div className="space-y-4">
                       <h3 className="text-lg font-medium text-center mb-4">
-                        Vocabulary List
+                        {t("modules.vocabularyList")}
                       </h3>
                       <ScrollArea className="h-[400px] pr-4">
                         {moduleData.dialogues[0]?.content?.vocabulary &&
@@ -921,7 +930,7 @@ const ModuleDetailPage = () => {
                                   <p className="text-primary font-medium mb-1">
                                     {item.translation &&
                                       item.translation[
-                                        selectedLanguage as keyof typeof item.translation
+                                        language as keyof typeof item.translation
                                       ]}
                                   </p>
                                   {item.definition && (
@@ -936,7 +945,7 @@ const ModuleDetailPage = () => {
                         ) : (
                           <div className="text-center py-8">
                             <p className="text-gray-500 mb-4">
-                              No vocabulary available for this module yet.
+                              {t("modules.noVocabulary")}
                             </p>
                           </div>
                         )}
@@ -951,12 +960,12 @@ const ModuleDetailPage = () => {
                     <div className="text-center py-8">
                       <BarChart className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                       <h3 className="text-lg font-medium mb-2">
-                        Additional Resources
+                        {t("modules.additionalResources")}
                       </h3>
                       <p className="text-gray-500 mb-4">
-                        Downloadable materials and practice exercises
+                        {t("modules.downloadableMaterials")}
                       </p>
-                      <Button>Access Resources</Button>
+                      <Button>{t("modules.accessResources")}</Button>
                     </div>
                   </CardContent>
                 </Card>

@@ -244,7 +244,9 @@ const ProgressPage = () => {
                     <span className="text-xl font-bold">
                       {userStats.streak}
                     </span>
-                    <span className="text-xs text-gray-500">Day Streak</span>
+                    <span className="text-xs text-gray-500">
+                      {t("progress.dayStreak")}
+                    </span>
                   </div>
                 </div>
                 <div>
@@ -254,7 +256,7 @@ const ProgressPage = () => {
                       {userStats.totalTimeSpent}
                     </span>
                     <span className="text-xs text-gray-500">
-                      Minutes Studied
+                      {t("progress.minutesStudied")}
                     </span>
                   </div>
                 </div>
@@ -264,7 +266,9 @@ const ProgressPage = () => {
                     <span className="text-xl font-bold">
                       {achievements.filter((a) => a.completed).length}
                     </span>
-                    <span className="text-xs text-gray-500">Achievements</span>
+                    <span className="text-xs text-gray-500">
+                      {t("progress.achievements")}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -280,7 +284,8 @@ const ProgressPage = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-sm text-muted-foreground">
-                    {completedDialogues} of {totalDialogues} dialogues completed
+                    {completedDialogues} {t("module.of")} {totalDialogues}{" "}
+                    {t("module.totalDialogues")} {t("module.completed")}
                   </span>
                   <span className="font-medium">{overallProgress}%</span>
                 </div>
@@ -365,8 +370,8 @@ const ProgressPage = () => {
                       <div className="space-y-2">
                         <div className="flex justify-between items-center text-sm">
                           <span className="text-muted-foreground">
-                            {module.completedDialogues} of{" "}
-                            {module.totalDialogues} dialogues
+                            {module.completedDialogues} {t("module.of")}{" "}
+                            {module.totalDialogues} {t("module.totalDialogues")}
                           </span>
                           <span>
                             {Math.round(
@@ -389,7 +394,7 @@ const ProgressPage = () => {
 
                       {module.lastAccessed && (
                         <div className="text-xs text-muted-foreground mt-2">
-                          Last accessed:{" "}
+                          {t("progress.lastAccessed")}{" "}
                           {new Date(module.lastAccessed).toLocaleDateString()}
                         </div>
                       )}
@@ -419,7 +424,7 @@ const ProgressPage = () => {
                         {achievement.completed ? (
                           <div className="flex items-center mt-2 text-sm text-green-600">
                             <CheckCircle className="h-4 w-4 mr-1" />
-                            Completed on{" "}
+                            {t("progress.completedOn")}{" "}
                             {new Date(achievement.date).toLocaleDateString()}
                           </div>
                         ) : achievement.progress !== undefined &&

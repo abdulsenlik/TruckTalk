@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import LanguageSelector from "@/components/LanguageSelector";
+import LanguageSelector, { useLanguage } from "@/components/LanguageSelector";
 
 interface EmergencyPhrase {
   id: number;
@@ -181,7 +181,7 @@ const emergencyPhrases: EmergencyPhrase[] = [
 
 const EmergencyPage = () => {
   const navigate = useNavigate();
-  const [selectedLanguage, setSelectedLanguage] = useState("tr");
+  const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>(
@@ -299,7 +299,7 @@ const EmergencyPage = () => {
         {
           body: {
             prompt: phrase.phrase,
-            language: selectedLanguage,
+            language: language,
           },
         },
       );
@@ -346,7 +346,7 @@ const EmergencyPage = () => {
           <div className="flex items-center space-x-4">
             <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
               <ArrowLeft className="h-5 w-5 mr-2" />
-              Back
+              {t("button.back")}
             </Button>
             <div className="flex items-center space-x-2">
               <Link
@@ -356,14 +356,11 @@ const EmergencyPage = () => {
                 TruckTalk
               </Link>
               <span className="text-xl font-bold text-muted-foreground">/</span>
-              <h1 className="text-xl font-bold">Emergency Phrases</h1>
+              <h1 className="text-xl font-bold">{t("nav.emergency")}</h1>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <LanguageSelector
-              selectedLanguage={selectedLanguage}
-              onSelectLanguage={setSelectedLanguage}
-            />
+            <LanguageSelector />
           </div>
         </div>
       </header>
@@ -388,10 +385,11 @@ const EmergencyPage = () => {
               </svg>
             </div>
             <div>
-              <h3 className="font-medium text-red-800">Emergency Use Only</h3>
+              <h3 className="font-medium text-red-800">
+                {t("emergency.warning")}
+              </h3>
               <p className="text-sm text-red-600">
-                These phrases are designed for urgent situations. Tap any phrase
-                to hear it spoken in English.
+                {t("emergency.description")}
               </p>
             </div>
           </div>
@@ -400,7 +398,7 @@ const EmergencyPage = () => {
           <div className="relative mb-6">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search emergency phrases..."
+              placeholder={t("emergency.search")}
               className="pl-10"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -414,11 +412,17 @@ const EmergencyPage = () => {
             className="mb-6"
           >
             <TabsList className="w-full grid grid-cols-2 md:grid-cols-5">
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="medical">Medical</TabsTrigger>
-              <TabsTrigger value="vehicle">Vehicle</TabsTrigger>
-              <TabsTrigger value="accident">Accident</TabsTrigger>
-              <TabsTrigger value="police">Police</TabsTrigger>
+              <TabsTrigger value="all">{t("emergency.all")}</TabsTrigger>
+              <TabsTrigger value="medical">
+                {t("emergency.medical")}
+              </TabsTrigger>
+              <TabsTrigger value="vehicle">
+                {t("emergency.vehicle")}
+              </TabsTrigger>
+              <TabsTrigger value="accident">
+                {t("emergency.accident")}
+              </TabsTrigger>
+              <TabsTrigger value="police">{t("emergency.police")}</TabsTrigger>
             </TabsList>
           </Tabs>
 
@@ -438,7 +442,7 @@ const EmergencyPage = () => {
                           <p className="text-muted-foreground">
                             {
                               phrase.translation[
-                                selectedLanguage as keyof typeof phrase.translation
+                                language as keyof typeof phrase.translation
                               ]
                             }
                           </p>
@@ -471,7 +475,7 @@ const EmergencyPage = () => {
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   >
-                                    Download Audio
+                                    {t("emergency.downloadAudio")}
                                   </a>
                                 )}
                               </div>
@@ -505,12 +509,12 @@ const EmergencyPage = () => {
                                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                   ></path>
                                 </svg>
-                                Generating
+                                {t("button.loading")}
                               </>
                             ) : phraseImages[phrase.id] ? (
-                              <>View Image</>
+                              <>{t("emergency.viewImage")}</>
                             ) : (
-                              <>Generate Image</>
+                              <>{t("emergency.generateImage")}</>
                             )}
                           </Button>
                         </div>
@@ -524,7 +528,7 @@ const EmergencyPage = () => {
             ) : (
               <div className="text-center py-12">
                 <p className="text-lg text-muted-foreground">
-                  No phrases found matching your search.
+                  {t("emergency.noResults")}
                 </p>
               </div>
             )}

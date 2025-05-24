@@ -158,10 +158,7 @@ const PricingPage = () => {
                 <Globe className="h-6 w-6 text-primary" />
                 <span className="text-xl font-bold">TruckTalk</span>
               </Link>
-              <p className="text-muted-foreground">
-                Master essential English phrases for truck drivers during
-                traffic stops and roadside interactions.
-              </p>
+              <p className="text-muted-foreground">{t("footer.description")}</p>
             </div>
             <div>
               <h3 className="font-medium mb-4">{t("footer.quickLinks")}</h3>
