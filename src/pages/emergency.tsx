@@ -327,15 +327,14 @@ const EmergencyPage = () => {
     autoGenerateImages();
 
     return () => {
-      if (audioRefs.current) {
-        Object.values(audioRefs.current).forEach((audio) => {
-          if (audio) {
-            audio.pause();
-            audio.src = "";
-          }
-        });
-        audioRefs.current = {};
-      }
+      // Clean up audio elements
+      Object.values(audioRefs).forEach((audio) => {
+        if (audio) {
+          audio.pause();
+          audio.src = "";
+        }
+      });
+      setAudioRefs({});
     };
   }, []);
 

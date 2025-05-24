@@ -119,7 +119,7 @@ export function useElevenLabsTTS() {
       if (!audioUrl) {
         console.error(
           "[TTS] No audioUrl found in response. Full response:",
-          data,
+          responseData,
         );
         throw new Error("No audioUrl returned from TTS API");
       }
