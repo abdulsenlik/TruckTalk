@@ -1,10 +1,10 @@
 import { Suspense, lazy, useEffect } from "react";
 import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./components/home";
-import SimpleHome from "./components/SimpleHome";
 import routes from "tempo-routes";
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 // Lazy load pages for better performance
 const ModuleDetailPage = lazy(() => import("./pages/module/[id]"));
@@ -40,33 +40,35 @@ function App() {
   }, [navigate]);
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex h-screen w-full items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-        </div>
-      }
-    >
-      <>
-        <Routes>
-          <Route path="/" element={<SimpleHome />} />
-          <Route path="/module/:id" element={<ModuleDetailPage />} />
-          <Route path="/lesson/:id" element={<LessonDetailPage />} />
-          <Route path="/modules" element={<ModulesPage />} />
-          <Route path="/emergency" element={<EmergencyPage />} />
-          <Route path="/progress" element={<ProgressPage />} />
-          <Route path="/pricing" element={<PricingPage />} />
-          <Route path="/success" element={<SuccessPage />} />
-          <Route path="/auth" element={<AuthPage />} />
-          {/* Add tempobook route to prevent catchall from capturing it */}
-          {import.meta.env.VITE_TEMPO === "true" && (
-            <Route path="/tempobook/*" />
-          )}
-        </Routes>
-        {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
-        <Toaster />
-      </>
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense
+        fallback={
+          <div className="flex h-screen w-full items-center justify-center">
+            <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+          </div>
+        }
+      >
+        <>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/module/:id" element={<ModuleDetailPage />} />
+            <Route path="/lesson/:id" element={<LessonDetailPage />} />
+            <Route path="/modules" element={<ModulesPage />} />
+            <Route path="/emergency" element={<EmergencyPage />} />
+            <Route path="/progress" element={<ProgressPage />} />
+            <Route path="/pricing" element={<PricingPage />} />
+            <Route path="/success" element={<SuccessPage />} />
+            <Route path="/auth" element={<AuthPage />} />
+            {/* Add tempobook route to prevent catchall from capturing it */}
+            {import.meta.env.VITE_TEMPO === "true" && (
+              <Route path="/tempobook/*" />
+            )}
+          </Routes>
+          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+          <Toaster />
+        </>
+      </Suspense>
+    </ErrorBoundary>
   );
 }
 
