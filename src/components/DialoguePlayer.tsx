@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
+import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
 import {
   Play,
   Pause,
@@ -126,6 +127,7 @@ const DialoguePlayer = ({
     Record<string, string>
   >({});
   const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
+  const { playText, loading: ttsLoading } = useElevenLabsTTS();
 
   // Audio reference
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -420,9 +422,9 @@ const DialoguePlayer = ({
                             size="sm"
                             className="h-6 w-6 p-0"
                             onClick={() => playVocabularyAudio(item.word)}
-                            disabled={audioLoading[item.word]}
+                            disabled={ttsLoading[item.word]}
                           >
-                            {audioLoading && audioLoading[item.word] ? (
+                            {ttsLoading && ttsLoading[item.word] ? (
                               <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                             ) : (
                               <Volume2 className="h-3 w-3" />

@@ -9,6 +9,7 @@ import {
   MessageSquare,
   User,
   Loader2,
+  CheckCircle,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import {
