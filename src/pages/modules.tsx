@@ -26,13 +26,13 @@ function getImageForSection(sectionId: string): string {
     case "explaining-situations":
       return "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80";
     case "citations-and-tickets":
-      return "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=600&q=80";
+      return "https://www.consumercoverage.com/wp-content/uploads/2023/03/Difference-Between-Citation-And-Ticket.jpg";
     case "emergency-situations":
-      return "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=600&q=80";
+      return "https://domf5oio6qrcr.cloudfront.net/medialibrary/12642/conversions/bd3a86d1-cab1-49f5-8b13-5ba9529203c6-thumb.jpg";
     case "basic-greetings":
       return "https://images.unsplash.com/photo-1577368211130-4bbd0181ddf0?w=600&q=80";
     case "road-signs-traffic-rules":
-      return "https://images.unsplash.com/photo-1564694457547-80311e2e653a?w=600&q=80";
+      return "https://www.accuform.com/files/damObject/Image/huge/TrafficSigns2.jpg";
     case "border-crossing":
       return "https://images.unsplash.com/photo-1631248055158-edec7a3c072b?w=600&q=80";
     case "vehicle-maintenance":

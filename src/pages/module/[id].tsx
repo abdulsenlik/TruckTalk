@@ -161,13 +161,13 @@ const ModuleDetailPage = () => {
       case "vehicle-inspection":
         return "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=800&q=80";
       case "explaining-situations":
-        return "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=800&q=80";
+        return "https://www.scamstuff.com/cdn/shop/products/ticket-00_480x480.jpg?v=1700079392$0";
       case "citations-and-tickets":
-        return "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=800&q=80";
+        return "https://www.scamstuff.com/cdn/shop/products/ticket-00_480x480.jpg?v=1700079392$0";
       case "emergency-situations":
-        return "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=800&q=80";
+        return "https://domf5oio6qrcr.cloudfront.net/medialibrary/12642/conversions/bd3a86d1-cab1-49f5-8b13-5ba9529203c6-thumb.jpg$0";
       default:
-        return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=800&q=80";
+        return "https://www.scamstuff.com/cdn/shop/products/ticket-00_480x480.jpg?v=1700079392$0";
     }
   }
 

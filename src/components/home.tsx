@@ -99,7 +99,7 @@ function getEmergencyPhraseImage(phrase: string): string {
   // Map phrases to relevant images
   switch (phrase.toLowerCase()) {
     case "i need medical help":
-      return "https://plumgroveinc.com/wp-content/uploads/medical-assistance-window-decals-32-2000x2000.jpg"; // Ambulance/medical image
+      return "https://dornsife.usc.edu/wp-content/uploads/sites/7/2023/04/story-3195.jpg"; // Ambulance/medical image
     case "my truck broke down":
       return "https://farm8.staticflickr.com/7232/7324846058_c01551db3c_z.jpg"; // Broken down truck
     case "i have a flat tire":

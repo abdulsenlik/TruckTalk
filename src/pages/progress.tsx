@@ -64,11 +64,11 @@ function getImageForSection(sectionId: string): string {
     case "vehicle-inspection":
       return "https://images.unsplash.com/photo-1487754180451-c456f719a1fc?w=600&q=80";
     case "explaining-situations":
-      return "https://images.unsplash.com/photo-1589578527966-fdac0f44566c?w=600&q=80";
+      return "https://www.policechiefmagazine.org/wp-content/uploads/Born_RNC-Community.jpg?w=600&q=80";
     case "citations-and-tickets":
-      return "https://images.unsplash.com/photo-1596394723269-b2cbca4e6e33?w=600&q=80";
+      return "https://www.consumercoverage.com/wp-content/uploads/2023/03/Difference-Between-Citation-And-Ticket.jpg?w=600&q=80";
     case "emergency-situations":
-      return "https://images.unsplash.com/photo-1635355955841-1b3e5fb67c3a?w=600&q=80";
+      return "https://domf5oio6qrcr.cloudfront.net/medialibrary/12642/conversions/bd3a86d1-cab1-49f5-8b13-5ba9529203c6-thumb.jpg?w=600&q=80";
     default:
       return "https://images.unsplash.com/photo-1590496793929-36417d3117de?w=600&q=80";
   }
