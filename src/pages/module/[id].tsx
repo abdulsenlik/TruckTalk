@@ -404,96 +404,42 @@ const ModuleDetailPage = () => {
                               </div>
                               <div className="mt-4 flex justify-center">
                                 <Button
-                                  onClick={() => {
+                                  onClick={async () => {
                                     console.log(
                                       "[Module] Playing full dialogue",
                                     );
-                                    // Play the entire dialogue
-                                    dialogue.exchanges.forEach(
-                                      (exchange, i) => {
-                                        // Add delay between speakers
-                                        setTimeout(async () => {
-                                          console.log(
-                                            `[Module] Playing exchange ${i + 1}/${dialogue.exchanges.length}: "${exchange.text.substring(0, 30)}..."`,
+                                    // Play the entire dialogue sequentially
+                                    for (
+                                      let i = 0;
+                                      i < dialogue.exchanges.length;
+                                      i++
+                                    ) {
+                                      const exchange = dialogue.exchanges[i];
+                                      console.log(
+                                        `[Module] Playing exchange ${i + 1}/${dialogue.exchanges.length}: "${exchange.text.substring(0, 30)}..."`,
+                                      );
+                                      try {
+                                        // Use the existing hook for TTS
+                                        await playText(
+                                          exchange.text,
+                                          `dialogue-${i}-${exchange.speaker.toLowerCase()}`,
+                                        );
+                                        console.log(
+                                          `[Module] Exchange ${i + 1}/${dialogue.exchanges.length} played successfully`,
+                                        );
+                                        // Add a small delay between exchanges
+                                        if (i < dialogue.exchanges.length - 1) {
+                                          await new Promise((resolve) =>
+                                            setTimeout(resolve, 1000),
                                           );
-                                          // Call the ElevenLabs TTS API
-                                          console.log(
-                                            "[Module] Sending fetch request to TTS API",
-                                          );
-                                          // Use Supabase Edge Function for TTS
-                                          const { supabase } = await import(
-                                            "@/lib/supabase"
-                                          );
-
-                                          supabase.functions
-                                            .invoke(
-                                              "supabase-functions-text-to-speech",
-                                              {
-                                                body: { text: exchange.text },
-                                              },
-                                            )
-                                            .then(({ data, error }) => {
-                                              if (error) {
-                                                console.error(
-                                                  `[Module] Exchange ${i + 1} error:`,
-                                                  error,
-                                                );
-                                                throw error;
-                                              }
-
-                                              console.log(
-                                                `[Module] Exchange ${i + 1} response data received`,
-                                              );
-
-                                              const audioUrl = data?.audioUrl;
-                                              console.log(
-                                                `[Module] Exchange ${i + 1} extracted audioUrl:`,
-                                                audioUrl,
-                                              );
-
-                                              if (audioUrl) {
-                                                console.log(
-                                                  `[Module] Exchange ${i + 1} creating Audio object with URL:`,
-                                                  audioUrl,
-                                                );
-                                                const audio = new Audio(
-                                                  audioUrl,
-                                                );
-                                                console.log(
-                                                  `[Module] Exchange ${i + 1} attempting to play audio...`,
-                                                );
-                                                audio
-                                                  .play()
-                                                  .then(() =>
-                                                    console.log(
-                                                      `[Module] Exchange ${i + 1} audio playback started successfully`,
-                                                    ),
-                                                  )
-                                                  .catch((error) => {
-                                                    console.error(
-                                                      `[Module] Exchange ${i + 1} error playing audio:`,
-                                                      error,
-                                                    );
-                                                  });
-                                              } else {
-                                                console.error(
-                                                  `[Module] Exchange ${i + 1} no audioUrl found in response. Full response:`,
-                                                  data,
-                                                );
-                                                throw new Error(
-                                                  "No audio URL returned from TTS API",
-                                                );
-                                              }
-                                            })
-                                            .catch((error) => {
-                                              console.error(
-                                                `[Module] Exchange ${i + 1} error with TTS process:`,
-                                                error,
-                                              );
-                                            });
-                                        }, i * 3000); // 3 second delay between each line
-                                      },
-                                    );
+                                        }
+                                      } catch (error) {
+                                        console.error(
+                                          `[Module] Exchange ${i + 1} error with TTS process:`,
+                                          error,
+                                        );
+                                      }
+                                    }
                                   }}
                                 >
                                   <Volume2 className="h-4 w-4 mr-2" />

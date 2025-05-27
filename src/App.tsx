@@ -15,6 +15,7 @@ const EmergencyPage = lazy(() => import("./pages/emergency"));
 const ProgressPage = lazy(() => import("./pages/progress"));
 const AuthPage = lazy(() => import("./pages/auth"));
 const PricingPage = lazy(() => import("./pages/pricing"));
+const LandingPage = lazy(() => import("./pages/landing"));
 
 function App() {
   const navigate = useNavigate();
@@ -51,6 +52,7 @@ function App() {
         <>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/landing" element={<LandingPage />} />
             <Route path="/module/:id" element={<ModuleDetailPage />} />
             <Route path="/lesson/:id" element={<LessonDetailPage />} />
             <Route path="/modules" element={<ModulesPage />} />

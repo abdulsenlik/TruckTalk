@@ -158,6 +158,12 @@ const Home = () => {
             >
               Pricing
             </Link>
+            <Link
+              to="/landing"
+              className="text-sm font-medium hover:text-primary"
+            >
+              About
+            </Link>
             <div className="flex items-center gap-2">
               <LanguageSelector />
               <UserAuthButton />
@@ -208,6 +214,12 @@ const Home = () => {
               className="text-sm font-medium hover:text-primary"
             >
               Pricing
+            </Link>
+            <Link
+              to="/landing"
+              className="text-sm font-medium hover:text-primary"
+            >
+              About
             </Link>
             <LanguageSelector />
             <UserAuthButton />
