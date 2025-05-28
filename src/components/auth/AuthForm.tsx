@@ -76,10 +76,28 @@ const AuthForm = () => {
       });
 
       if (error) {
+        console.error("Login error:", error);
+
+        let errorMessage = error.message;
+
+        // Handle specific error cases
+        if (
+          error.message?.toLowerCase().includes("invalid") &&
+          error.message?.toLowerCase().includes("email")
+        ) {
+          errorMessage =
+            "Email validation failed. Please check your Supabase project settings - email confirmation might be enabled without proper email delivery configuration.";
+        } else if (
+          error.message?.toLowerCase().includes("invalid login credentials")
+        ) {
+          errorMessage =
+            "Invalid email or password. Please check your credentials and try again.";
+        }
+
         toast({
           variant: "destructive",
           title: t("auth.loginFailed"),
-          description: error.message,
+          description: errorMessage,
         });
         return;
       }
@@ -89,7 +107,8 @@ const AuthForm = () => {
         description: t("auth.welcomeBack"),
       });
       navigate("/");
-    } catch (error) {
+    } catch (error: any) {
+      console.error("Login catch error:", error);
       toast({
         variant: "destructive",
         title: t("auth.somethingWrong"),
@@ -103,7 +122,12 @@ const AuthForm = () => {
   const onSignupSubmit = async (data: SignupFormValues) => {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signUp({
+      console.log("Attempting signup with:", {
+        email: data.email,
+        name: data.name,
+      });
+
+      const { data: authData, error } = await supabase.auth.signUp({
         email: data.email,
         password: data.password,
         options: {
@@ -113,25 +137,70 @@ const AuthForm = () => {
         },
       });
 
+      console.log("Signup response:", { authData, error });
+
       if (error) {
+        console.error("Signup error:", error);
+        console.error("Full error object:", JSON.stringify(error, null, 2));
+
+        let errorMessage = error.message;
+
+        // Handle specific error cases with more helpful messages
+        if (
+          error.message?.toLowerCase().includes("invalid") &&
+          error.message?.toLowerCase().includes("email")
+        ) {
+          errorMessage =
+            "Email validation failed. This is likely due to Supabase configuration. Please check if:\n\n1. Email confirmation is enabled in your Supabase project\n2. Email delivery is properly configured\n3. There are no domain restrictions\n\nTry disabling email confirmation in Authentication > Settings temporarily.";
+        } else if (
+          error.message?.toLowerCase().includes("user already registered")
+        ) {
+          errorMessage =
+            "An account with this email already exists. Please try logging in instead.";
+        } else if (
+          error.message?.toLowerCase().includes("signup is disabled")
+        ) {
+          errorMessage =
+            "Account creation is currently disabled. Please contact support.";
+        }
+
         toast({
           variant: "destructive",
           title: t("auth.signupFailed"),
-          description: error.message,
+          description: errorMessage,
         });
         return;
       }
 
-      toast({
-        title: t("auth.signupSuccessful"),
-        description: t("auth.checkEmail"),
-      });
-      setActiveTab("login");
-    } catch (error) {
+      // Check if user was created successfully
+      if (authData.user) {
+        toast({
+          title: t("auth.signupSuccessful"),
+          description: authData.user.email_confirmed_at
+            ? "Account created successfully! You can now log in."
+            : t("auth.checkEmail"),
+        });
+
+        // If email is already confirmed, redirect to login
+        if (authData.user.email_confirmed_at) {
+          setActiveTab("login");
+        }
+      } else {
+        toast({
+          title: t("auth.signupSuccessful"),
+          description: t("auth.checkEmail"),
+        });
+        setActiveTab("login");
+      }
+    } catch (error: any) {
+      console.error("Signup catch error:", error);
+      console.error("Full catch error object:", JSON.stringify(error, null, 2));
+
       toast({
         variant: "destructive",
         title: t("auth.somethingWrong"),
-        description: t("auth.tryAgain"),
+        description:
+          "An unexpected error occurred. Please check the console for details and try again.",
       });
     } finally {
       setIsLoading(false);
