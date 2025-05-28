@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -45,9 +45,17 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [searchParams] = useSearchParams();
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useLanguage();
+
+  useEffect(() => {
+    // Check if signup parameter is present in URL
+    if (searchParams.get("signup") === "true") {
+      setActiveTab("signup");
+    }
+  }, [searchParams]);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),

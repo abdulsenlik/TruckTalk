@@ -57,9 +57,19 @@ const UserAuthButton = () => {
 
   if (!user) {
     return (
-      <Button size="sm" onClick={() => navigate("/auth")}>
-        {t("auth.login")}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/auth")}
+          className="text-sm font-medium hover:text-primary"
+        >
+          {t("auth.login")}
+        </Button>
+        <Button size="sm" onClick={() => navigate("/auth?signup=true")}>
+          {t("auth.signup")}
+        </Button>
+      </div>
     );
   }
 
