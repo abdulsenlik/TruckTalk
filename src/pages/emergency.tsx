@@ -184,10 +184,9 @@ const EmergencyPage = () => {
   const { language, t } = useLanguage();
   const [activeCategory, setActiveCategory] = useState("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [loadingImages, setLoadingImages] = useState<Record<number, boolean>>(
+  const [loadingImages, setLoadingImages] = useState<Record<string, boolean>>(
     {},
   );
-  const [phraseImages, setPhraseImages] = useState<Record<number, string>>({});
   const [audioPlaybackErrors, setAudioPlaybackErrors] = useState<
     Record<number, string>
   >({});
@@ -207,125 +206,92 @@ const EmergencyPage = () => {
 
   const playAudio = async (phrase: EmergencyPhrase) => {
     console.log(`[Emergency] Playing audio for phrase: "${phrase.phrase}"`);
-    // Set loading state
     setLoadingImages((prev) => ({ ...prev, [`audio-${phrase.id}`]: true }));
     setAudioPlaybackErrors((prev) => ({ ...prev, [phrase.id]: "" }));
 
     try {
-      // Call the ElevenLabs TTS API
-      console.log("[Emergency] Sending fetch request to TTS API");
-      // Use Supabase Edge Function for TTS
-      const { supabase } = await import("@/lib/supabase");
-
-      supabase.functions
-        .invoke("supabase-functions-tts-service", {
-          body: { text: phrase.phrase },
-        })
-        .then(({ data, error }) => {
-          if (error) {
-            console.error("[Emergency] TTS error:", error);
-            throw error;
-          }
-
-          console.log("[Emergency] TTS response data received");
-
-          // Get audio URL from response
-          const audioUrl = data?.audioUrl;
-          console.log("[Emergency] Extracted audioUrl:", audioUrl);
-
-          if (audioUrl) {
-            // Store the audio URL for potential download
-            setAudioUrls((prev) => ({ ...prev, [phrase.id]: audioUrl }));
-
-            console.log(
-              "[Emergency] Creating Audio object with URL:",
-              audioUrl,
-            );
-            const audio = new Audio(audioUrl);
-            console.log("[Emergency] Attempting to play audio...");
-            return audio.play().catch((playError) => {
-              console.error("[Emergency] Error playing audio:", playError);
-              setAudioPlaybackErrors((prev) => ({
-                ...prev,
-                [phrase.id]: "Playback failed. Try downloading instead.",
-              }));
-              throw playError;
-            });
-          } else {
-            console.error(
-              "[Emergency] No audioUrl found in response. Full response:",
-              data,
-            );
-            throw new Error("No audio URL returned from TTS API");
-          }
-        })
-        .catch((error) => {
-          console.error("[Emergency] Error with TTS process:", error);
-          setAudioPlaybackErrors((prev) => ({
-            ...prev,
-            [phrase.id]:
-              error instanceof Error ? error.message : "Unknown error",
-          }));
-        })
-        .finally(() => {
-          // Set loading to false after processing
-          setTimeout(() => {
-            setLoadingImages((prev) => ({
-              ...prev,
-              [`audio-${phrase.id}`]: false,
-            }));
-          }, 1000);
-        });
-    } catch (error) {
-      console.error("[Emergency] Error with TTS setup:", error);
-      setAudioPlaybackErrors((prev) => ({
-        ...prev,
-        [phrase.id]: error instanceof Error ? error.message : "Unknown error",
-      }));
-      setLoadingImages((prev) => ({ ...prev, [`audio-${phrase.id}`]: false }));
-    }
-  };
-
-  const generateImage = async (phrase: EmergencyPhrase) => {
-    if (phraseImages[phrase.id]) return; // Skip if image already exists
-
-    try {
-      setLoadingImages((prev) => ({ ...prev, [phrase.id]: true }));
-
       const { supabase } = await import("@/lib/supabase");
 
       const { data, error } = await supabase.functions.invoke(
-        "supabase-functions-generate-image",
+        "supabase-functions-text-to-speech",
         {
-          body: {
-            prompt: phrase.phrase,
-            language: language,
-          },
+          body: { text: phrase.phrase },
         },
       );
 
-      if (error) throw error;
-
-      if (data?.imageUrl) {
-        setPhraseImages((prev) => ({ ...prev, [phrase.id]: data.imageUrl }));
+      if (error) {
+        console.error(`[Emergency] Supabase error:`, error);
+        setAudioPlaybackErrors((prev) => ({
+          ...prev,
+          [phrase.id]: `TTS service failed: ${error.message || "Unknown error"}`,
+        }));
+        return;
       }
-    } catch (error) {
-      console.error("Error generating image:", error);
+
+      if (!data) {
+        console.error("[Emergency] No audio data returned");
+        setAudioPlaybackErrors((prev) => ({
+          ...prev,
+          [phrase.id]: "No audio data received from server.",
+        }));
+        return;
+      }
+
+      const blob = new Blob([data], { type: "audio/mpeg" });
+      const blobUrl = URL.createObjectURL(blob);
+
+      console.log("Blob size:", blob.size);
+      console.log("Blob URL:", blobUrl);
+
+      const audio = new Audio(blobUrl);
+      audio.preload = "auto";
+      audio.playsInline = true;
+
+      setAudioUrls((prev) => ({ ...prev, [phrase.id]: blobUrl }));
+      setAudioRefs((prev) => ({ ...prev, [phrase.id]: audio }));
+
+      // Try muted playback first to get around autoplay policy
+      audio.muted = true;
+      audio
+        .play()
+        .then(() => {
+          console.log(
+            "[Emergency] Silent autoplay succeeded, enabling audio...",
+          );
+          audio.muted = false;
+          audio.currentTime = 0;
+          audio.play().catch((err) => {
+            console.error(`[Emergency] Playback retry failed:`, err);
+            setAudioPlaybackErrors((prev) => ({
+              ...prev,
+              [phrase.id]: "Playback failed. Try downloading instead.",
+            }));
+          });
+        })
+        .catch((playError) => {
+          console.error(`[Emergency] Muted autoplay failed:`, playError);
+          setAudioPlaybackErrors((prev) => ({
+            ...prev,
+            [phrase.id]: "Autoplay blocked. Try downloading instead.",
+          }));
+        });
+    } catch (err) {
+      console.error(`[Emergency] TTS failure:`, err);
+      setAudioPlaybackErrors((prev) => ({
+        ...prev,
+        [phrase.id]: "Unexpected error occurred.",
+      }));
     } finally {
-      setLoadingImages((prev) => ({ ...prev, [phrase.id]: false }));
+      setTimeout(() => {
+        setLoadingImages((prev) => ({
+          ...prev,
+          [`audio-${phrase.id}`]: false,
+        }));
+      }, 500);
     }
   };
 
   useEffect(() => {
-    // Auto-generate images for the first few phrases when the page loads
-    const autoGenerateImages = async () => {
-      for (let i = 0; i < Math.min(5, emergencyPhrases.length); i++) {
-        await generateImage(emergencyPhrases[i]);
-      }
-    };
-
-    autoGenerateImages();
-
     return () => {
       // Clean up audio elements
       Object.values(audioRefs).forEach((audio) => {
@@ -447,31 +413,35 @@ const EmergencyPage = () => {
                             }
                           </p>
                         </div>
-                        <div className="flex space-x-2 self-end md:self-center">
+                        <div className="flex justify-center md:justify-end">
                           <div className="flex flex-col items-center">
                             <Button
                               size="sm"
                               variant="ghost"
                               onClick={() => playAudio(phrase)}
                               disabled={loadingImages[`audio-${phrase.id}`]}
+                              className="flex items-center gap-2"
                             >
                               {loadingImages[`audio-${phrase.id}`] ? (
-                                <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent mr-2"></span>
+                                <span className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                               ) : (
                                 <Volume2 className="h-5 w-5" />
                               )}
+                              <span className="hidden sm:inline">
+                                {t("button.playAudio")}
+                              </span>
                               <span className="sr-only">Play audio</span>
                             </Button>
                             {audioPlaybackErrors[phrase.id] && (
-                              <div className="flex flex-col items-center mt-1">
-                                <span className="text-xs text-red-500">
+                              <div className="flex flex-col items-center mt-1 text-center">
+                                <span className="text-xs text-red-500 mb-1">
                                   {audioPlaybackErrors[phrase.id]}
                                 </span>
                                 {audioUrls[phrase.id] && (
                                   <a
                                     href={audioUrls[phrase.id]}
                                     download={`${phrase.phrase.replace(/\s+/g, "-").toLowerCase()}.mp3`}
-                                    className="text-xs text-blue-500 hover:underline"
+                                    className="text-xs text-blue-500 hover:underline px-2 py-1 bg-blue-50 rounded"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                   >
@@ -481,46 +451,8 @@ const EmergencyPage = () => {
                               </div>
                             )}
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => generateImage(phrase)}
-                            disabled={loadingImages[phrase.id]}
-                          >
-                            {loadingImages[phrase.id] ? (
-                              <>
-                                <svg
-                                  className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary"
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                >
-                                  <circle
-                                    className="opacity-25"
-                                    cx="12"
-                                    cy="12"
-                                    r="10"
-                                    stroke="currentColor"
-                                    strokeWidth="4"
-                                  ></circle>
-                                  <path
-                                    className="opacity-75"
-                                    fill="currentColor"
-                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                  ></path>
-                                </svg>
-                                {t("button.loading")}
-                              </>
-                            ) : phraseImages[phrase.id] ? (
-                              <>{t("emergency.viewImage")}</>
-                            ) : (
-                              <>{t("emergency.generateImage")}</>
-                            )}
-                          </Button>
                         </div>
                       </div>
-
-                      {/* Image is now shown above, no need for duplicate */}
                     </div>
                   </CardContent>
                 </Card>

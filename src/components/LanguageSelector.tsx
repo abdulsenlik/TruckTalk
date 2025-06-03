@@ -71,6 +71,14 @@ const translations: TranslationDictionary = {
     zh: "紧急短语",
     es: "Frases de Emergencia",
   },
+  "button.playAudio": {
+    en: "Play Audio",
+    tr: "Sesi Oynat",
+    kg: "Аудио ойнотуу",
+    ru: "Воспроизвести аудио",
+    zh: "播放音频",
+    es: "Reproducir Audio",
+  },
   "nav.home": {
     en: "Home",
     tr: "Ana Sayfa",
@@ -990,6 +998,14 @@ const translations: TranslationDictionary = {
     ru: "Возникла проблема при запуске процесса оформления заказа. Пожалуйста, попробуйте еще раз.",
     zh: "启动结账过程时出现问题。请再试一次。",
     es: "Hubo un problema al iniciar el proceso de pago. Por favor, inténtelo de nuevo.",
+  },
+  "button.playAudio": {
+    en: "Play Audio",
+    tr: "Sesi Oynat",
+    kg: "Аудио ойнотуу",
+    ru: "Воспроизвести аудио",
+    zh: "播放音频",
+    es: "Reproducir Audio",
   },
 };
 
