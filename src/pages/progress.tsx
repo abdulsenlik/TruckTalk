@@ -14,6 +14,8 @@ import {
   Zap,
   BookOpen,
   User,
+  LogIn,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,18 +43,40 @@ interface UserStats {
   nextLevelXp: number;
 }
 
+interface UserProfile {
+  id: string;
+  email: string;
+  username?: string;
+  progress: {
+    moduleProgress: ModuleProgress[];
+    userStats: UserStats;
+    achievements: Achievement[];
+  };
+}
+
+interface Achievement {
+  id: number;
+  title: string;
+  description: string;
+  icon: React.ReactNode;
+  completed: boolean;
+  date?: string;
+  progress?: number;
+  total?: number;
+}
+
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
-const moduleProgress: ModuleProgress[] = trafficStopCourse.map(
-  (section, index) => ({
+// Default module progress structure
+const getDefaultModuleProgress = (): ModuleProgress[] =>
+  trafficStopCourse.map((section, index) => ({
     id: index + 1,
     title: section.title,
     totalDialogues: section.dialogues.length,
-    completedDialogues: index === 0 ? 1 : 0,
-    lastAccessed: index === 0 ? new Date().toISOString() : "",
+    completedDialogues: 0,
+    lastAccessed: "",
     image: getImageForSection(section.id),
-  }),
-);
+  }));
 
 // Helper function to get appropriate image for each section
 function getImageForSection(sectionId: string): string {
@@ -74,14 +98,14 @@ function getImageForSection(sectionId: string): string {
   }
 }
 
-const achievements = [
+// Default achievements structure
+const getDefaultAchievements = (): Achievement[] => [
   {
     id: 1,
     title: "First Lesson",
     description: "Complete your first dialogue",
     icon: <Award className="h-8 w-8 text-yellow-500" />,
-    completed: true,
-    date: "2023-05-08",
+    completed: false,
   },
   {
     id: 2,
@@ -89,7 +113,7 @@ const achievements = [
     description: "Complete 5 dialogues",
     icon: <TrendingUp className="h-8 w-8 text-blue-500" />,
     completed: false,
-    progress: 3,
+    progress: 0,
     total: 5,
   },
   {
@@ -98,7 +122,7 @@ const achievements = [
     description: "Study for 3 consecutive days",
     icon: <Calendar className="h-8 w-8 text-green-500" />,
     completed: false,
-    progress: 1,
+    progress: 0,
     total: 3,
   },
   {
@@ -107,7 +131,7 @@ const achievements = [
     description: "Complete the Road Signs module",
     icon: <Target className="h-8 w-8 text-red-500" />,
     completed: false,
-    progress: 2,
+    progress: 0,
     total: 8,
   },
   {
@@ -116,7 +140,7 @@ const achievements = [
     description: "Complete all emergency phrases",
     icon: <Zap className="h-8 w-8 text-purple-500" />,
     completed: false,
-    progress: 5,
+    progress: 0,
     total: 15,
   },
   {
@@ -125,37 +149,149 @@ const achievements = [
     description: "Learn 100 new words",
     icon: <BookOpen className="h-8 w-8 text-indigo-500" />,
     completed: false,
-    progress: 42,
+    progress: 0,
     total: 100,
   },
 ];
 
-const userStats: UserStats = {
-  totalTimeSpent: 127, // minutes
-  streak: 2, // days
+// Default user stats
+const getDefaultUserStats = (): UserStats => ({
+  totalTimeSpent: 0,
+  streak: 0,
   lastActive: new Date().toISOString(),
-  level: 3,
-  xp: 320,
-  nextLevelXp: 500,
-};
+  level: 1,
+  xp: 0,
+  nextLevelXp: 100,
+});
 
 const ProgressPage = () => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([]);
+  const [userStats, setUserStats] = useState<UserStats>(getDefaultUserStats());
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
 
   useEffect(() => {
-    const getUser = async () => {
+    const initializeUserData = async () => {
       setIsLoading(true);
-      const { data } = await supabase.auth.getUser();
-      if (data?.user) {
-        setUser(data.user);
+      try {
+        // Get current user
+        const {
+          data: { user: currentUser },
+        } = await supabase.auth.getUser();
+
+        if (!currentUser) {
+          setUser(null);
+          setIsLoading(false);
+          return;
+        }
+
+        setUser(currentUser);
+
+        // Fetch user profile from database
+        const { data: profile, error } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", currentUser.id)
+          .single();
+
+        if (error && error.code !== "PGRST116") {
+          // PGRST116 = no rows returned
+          console.error("Error fetching profile:", error);
+          // Use default data if profile fetch fails
+          initializeDefaultData();
+          return;
+        }
+
+        if (profile && profile.progress) {
+          // User has existing progress data
+          const progressData = profile.progress;
+          setModuleProgress(
+            progressData.moduleProgress || getDefaultModuleProgress(),
+          );
+          setUserStats(progressData.userStats || getDefaultUserStats());
+          setAchievements(
+            progressData.achievements || getDefaultAchievements(),
+          );
+          setUserProfile({
+            id: profile.id,
+            email: profile.email,
+            username: profile.username,
+            progress: progressData,
+          });
+        } else {
+          // New user or no progress data - initialize with defaults
+          await initializeNewUserProgress(currentUser);
+        }
+      } catch (error) {
+        console.error("Error initializing user data:", error);
+        initializeDefaultData();
+      } finally {
+        setIsLoading(false);
       }
-      setIsLoading(false);
     };
 
-    getUser();
+    const initializeDefaultData = () => {
+      setModuleProgress(getDefaultModuleProgress());
+      setUserStats(getDefaultUserStats());
+      setAchievements(getDefaultAchievements());
+    };
+
+    const initializeNewUserProgress = async (currentUser: any) => {
+      const defaultModuleProgress = getDefaultModuleProgress();
+      const defaultUserStats = getDefaultUserStats();
+      const defaultAchievements = getDefaultAchievements();
+
+      const progressData = {
+        moduleProgress: defaultModuleProgress,
+        userStats: defaultUserStats,
+        achievements: defaultAchievements,
+      };
+
+      // Update profile with initial progress data
+      const { error } = await supabase
+        .from("profiles")
+        .update({ progress: progressData })
+        .eq("id", currentUser.id);
+
+      if (error) {
+        console.error("Error updating profile with initial progress:", error);
+      }
+
+      setModuleProgress(defaultModuleProgress);
+      setUserStats(defaultUserStats);
+      setAchievements(defaultAchievements);
+      setUserProfile({
+        id: currentUser.id,
+        email: currentUser.email,
+        username: currentUser.user_metadata?.name,
+        progress: progressData,
+      });
+    };
+
+    initializeUserData();
+
+    // Listen for auth state changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_OUT") {
+        setUser(null);
+        setUserProfile(null);
+        setModuleProgress([]);
+        setUserStats(getDefaultUserStats());
+        setAchievements([]);
+      } else if (event === "SIGNED_IN" && session?.user) {
+        initializeUserData();
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Calculate overall progress
@@ -174,6 +310,111 @@ const ProgressPage = () => {
 
   // Calculate XP progress percentage
   const xpProgress = Math.round((userStats.xp / userStats.nextLevelXp) * 100);
+
+  // Unauthenticated user fallback UI
+  if (!user && !isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Header */}
+        <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+          <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+                <ArrowLeft className="h-5 w-5 mr-2" />
+                {t("button.back")}
+              </Button>
+              <div className="flex items-center space-x-2">
+                <Link
+                  to="/"
+                  className="text-xl font-bold hover:text-primary transition-colors"
+                >
+                  TruckTalk
+                </Link>
+                <span className="text-xl font-bold text-muted-foreground">
+                  /
+                </span>
+                <h1 className="text-xl font-bold">{t("progress.title")}</h1>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <LanguageSelector />
+            </div>
+          </div>
+        </header>
+
+        <main className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <Card className="p-8">
+              <div className="mb-6">
+                <User className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                <h2 className="text-2xl font-bold mb-2">
+                  Sign In to View Your Progress
+                </h2>
+                <p className="text-muted-foreground mb-6">
+                  Track your learning journey, view completed modules, and earn
+                  achievements by signing in to your account.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Button
+                  onClick={() => navigate("/auth")}
+                  className="flex items-center gap-2"
+                >
+                  <LogIn className="h-4 w-4" />
+                  {t("auth.login")}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => navigate("/auth?signup=true")}
+                  className="flex items-center gap-2"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  {t("auth.signup")}
+                </Button>
+              </div>
+
+              <div className="mt-8 pt-6 border-t">
+                <h3 className="font-semibold mb-3">
+                  What you'll get with an account:
+                </h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Track your progress</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Earn achievements</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Save your learning streak</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    <span>Resume where you left off</span>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading your progress...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -213,7 +454,9 @@ const ProgressPage = () => {
                 </div>
                 <div>
                   <h2 className="text-xl font-bold">
-                    {user?.user_metadata?.name || "Truck Driver"}
+                    {user?.user_metadata?.name ||
+                      userProfile?.username ||
+                      "Truck Driver"}
                   </h2>
                   <div className="flex items-center mt-1">
                     <Star className="h-4 w-4 mr-1 fill-white" />

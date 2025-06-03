@@ -3,7 +3,20 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   id UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
   email TEXT NOT NULL,
   username TEXT,
-  progress JSONB DEFAULT '{}'::jsonb
+  progress JSONB DEFAULT '{
+    "moduleProgress": [],
+    "userStats": {
+      "totalTimeSpent": 0,
+      "streak": 0,
+      "lastActive": "",
+      "level": 1,
+      "xp": 0,
+      "nextLevelXp": 100
+    },
+    "achievements": []
+  }'::jsonb,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- Enable row level security
@@ -47,13 +60,28 @@ CREATE POLICY "Service role can manage all profiles"
 
 -- Create function to handle new user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+RETURNS TRIGGER AS $
 BEGIN
-  INSERT INTO public.profiles (id, email)
-  VALUES (NEW.id, NEW.email);
+  INSERT INTO public.profiles (id, email, username)
+  VALUES (NEW.id, NEW.email, COALESCE(NEW.raw_user_meta_data->>'name', ''));
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+RETURNS TRIGGER AS $
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$ LANGUAGE plpgsql;
+
+-- Create trigger to update updated_at on profile changes
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON public.profiles;
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE PROCEDURE public.update_updated_at_column();
 
 -- Create trigger to automatically create profile when a user signs up
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
