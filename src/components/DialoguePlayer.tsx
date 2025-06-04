@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { supabase } from "@/lib/supabase";
-import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
+import { audioService } from "@/lib/audioService";
 import {
   Play,
   Pause,
@@ -126,8 +126,11 @@ const DialoguePlayer = ({
   const [audioPlaybackError, setAudioPlaybackError] = useState<
     Record<string, string>
   >({});
-  const [audioUrls, setAudioUrls] = useState<Record<string, string>>({});
-  const { playText, loading: ttsLoading } = useElevenLabsTTS();
+  const [audioUrls, setAudioUrls] = useState<Record<number, string>>({});
+  const [ttsLoading, setTtsLoading] = useState<Record<string, boolean>>({});
+  const [audioRefs, setAudioRefs] = useState<Record<number, HTMLAudioElement>>(
+    {},
+  );
 
   // Audio reference
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -200,38 +203,40 @@ const DialoguePlayer = ({
   };
 
   const playLineAudio = async (text: string) => {
+    const identifier = `line-${text.substring(0, 10).replace(/\s+/g, "-")}`;
+    setTtsLoading((prev) => ({ ...prev, [identifier]: true }));
+
     try {
       console.log(
-        "[DialoguePlayer] Calling text-to-speech function for line:",
+        "[DialoguePlayer] Playing line audio:",
         text.substring(0, 30) + "...",
       );
 
-      await playText(
-        text,
-        `line-${text.substring(0, 10).replace(/\s+/g, "-")}`,
-      );
-      console.log("[DialoguePlayer] Playing audio from URL - success");
+      await audioService.playText(text, identifier);
+      console.log("[DialoguePlayer] Audio played successfully");
     } catch (error) {
-      console.error("[DialoguePlayer] Error playing audio:", error);
+      console.error("[DialoguePlayer] Audio Error:", error);
+    } finally {
+      setTtsLoading((prev) => ({ ...prev, [identifier]: false }));
     }
   };
 
   const playVocabularyAudio = async (word: string) => {
     setAudioPlaybackError((prev) => ({ ...prev, [word]: "" }));
+    setTtsLoading((prev) => ({ ...prev, [word]: true }));
 
     try {
       console.log("[DialoguePlayer] Playing vocabulary audio for word:", word);
-      await playText(word, word);
-      console.log(
-        "[DialoguePlayer] Successfully started playing audio for word:",
-        word,
-      );
+      await audioService.playText(word, word);
+      console.log("[DialoguePlayer] Audio played successfully for word:", word);
     } catch (error) {
-      console.error("[DialoguePlayer] Error playing vocabulary audio:", error);
+      console.error("[DialoguePlayer] Audio Error:", error);
       setAudioPlaybackError((prev) => ({
         ...prev,
-        [word]: error instanceof Error ? error.message : "Unknown error",
+        [word]: "Failed to play audio",
       }));
+    } finally {
+      setTtsLoading((prev) => ({ ...prev, [word]: false }));
     }
   };
 
@@ -424,7 +429,7 @@ const DialoguePlayer = ({
                             onClick={() => playVocabularyAudio(item.word)}
                             disabled={ttsLoading[item.word]}
                           >
-                            {ttsLoading && ttsLoading[item.word] ? (
+                            {ttsLoading[item.word] ? (
                               <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                             ) : (
                               <Volume2 className="h-3 w-3" />
@@ -435,17 +440,6 @@ const DialoguePlayer = ({
                               <span className="text-xs text-red-500">
                                 {audioPlaybackError[item.word]}
                               </span>
-                              {audioUrls[item.word] && (
-                                <a
-                                  href={audioUrls[item.word]}
-                                  download={`${item.word}.mp3`}
-                                  className="text-xs text-blue-500 hover:underline"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  Download Audio
-                                </a>
-                              )}
                             </div>
                           )}
                         </div>

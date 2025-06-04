@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
+import { audioService } from "@/lib/audioService";
 import {
   Play,
   Pause,
@@ -70,7 +70,7 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
   nativeLanguage = "turkish",
   onComplete = () => {},
 }) => {
-  const { playText, loading } = useElevenLabsTTS();
+  const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [currentExchangeIndex, setCurrentExchangeIndex] = useState(0);
   const [conversation, setConversation] = useState<DialogueExchange[]>([]);
   const [userInput, setUserInput] = useState("");
@@ -156,12 +156,16 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
   }, [conversation]);
 
   const playOfficerLine = async (text: string) => {
+    const identifier = `officer-${conversation.length}`;
     try {
       console.log("[RoleplayDialogue] Playing officer line:", text);
-      await playText(text, `officer-${conversation.length}`);
+      setLoading((prev) => ({ ...prev, [identifier]: true }));
+      await audioService.playText(text, identifier);
+      setLoading((prev) => ({ ...prev, [identifier]: false }));
       return true;
     } catch (error) {
       console.error("[RoleplayDialogue] Error playing officer line:", error);
+      setLoading((prev) => ({ ...prev, [identifier]: false }));
       return false;
     }
   };

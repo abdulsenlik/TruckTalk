@@ -5,6 +5,10 @@ import routes from "tempo-routes";
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
 import ErrorBoundary from "./components/ErrorBoundary";
+import { AudioPermissionProvider } from "./components/AudioPermissionProvider";
+import { SubscriptionProvider } from "./contexts/SubscriptionContext";
+import UpsellModal from "./components/UpsellModal";
+import { useSubscription } from "./contexts/SubscriptionContext";
 
 // Lazy load pages for better performance
 const ModuleDetailPage = lazy(() => import("./pages/module/[id]"));
@@ -17,8 +21,11 @@ const AuthPage = lazy(() => import("./pages/auth"));
 const PricingPage = lazy(() => import("./pages/pricing"));
 const LandingPage = lazy(() => import("./pages/landing"));
 
-function App() {
+// Inner App component that uses subscription context
+function AppContent() {
   const navigate = useNavigate();
+  const { upgradeModalVisible, upgradeFeature, hideUpgradeModal } =
+    useSubscription();
 
   useEffect(() => {
     // Set up auth state listener
@@ -41,7 +48,7 @@ function App() {
   }, [navigate]);
 
   return (
-    <ErrorBoundary>
+    <>
       <Suspense
         fallback={
           <div className="flex h-screen w-full items-center justify-center">
@@ -70,6 +77,25 @@ function App() {
           <Toaster />
         </>
       </Suspense>
+
+      {/* Global Upsell Modal */}
+      <UpsellModal
+        open={upgradeModalVisible}
+        onClose={hideUpgradeModal}
+        feature={upgradeFeature}
+      />
+    </>
+  );
+}
+
+function App() {
+  return (
+    <ErrorBoundary>
+      <AudioPermissionProvider>
+        <SubscriptionProvider>
+          <AppContent />
+        </SubscriptionProvider>
+      </AudioPermissionProvider>
     </ErrorBoundary>
   );
 }

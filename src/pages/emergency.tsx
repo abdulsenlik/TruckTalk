@@ -210,76 +210,14 @@ const EmergencyPage = () => {
     setAudioPlaybackErrors((prev) => ({ ...prev, [phrase.id]: "" }));
 
     try {
-      const { supabase } = await import("@/lib/supabase");
-
-      const { data, error } = await supabase.functions.invoke(
-        "supabase-functions-text-to-speech",
-        {
-          body: { text: phrase.phrase },
-        },
-      );
-
-      if (error) {
-        console.error(`[Emergency] Supabase error:`, error);
-        setAudioPlaybackErrors((prev) => ({
-          ...prev,
-          [phrase.id]: `TTS service failed: ${error.message || "Unknown error"}`,
-        }));
-        return;
-      }
-
-      if (!data) {
-        console.error("[Emergency] No audio data returned");
-        setAudioPlaybackErrors((prev) => ({
-          ...prev,
-          [phrase.id]: "No audio data received from server.",
-        }));
-        return;
-      }
-
-      const blob = new Blob([data], { type: "audio/mpeg" });
-      const blobUrl = URL.createObjectURL(blob);
-
-      console.log("Blob size:", blob.size);
-      console.log("Blob URL:", blobUrl);
-
-      const audio = new Audio(blobUrl);
-      audio.preload = "auto";
-      audio.playsInline = true;
-
-      setAudioUrls((prev) => ({ ...prev, [phrase.id]: blobUrl }));
-      setAudioRefs((prev) => ({ ...prev, [phrase.id]: audio }));
-
-      // Try muted playback first to get around autoplay policy
-      audio.muted = true;
-      audio
-        .play()
-        .then(() => {
-          console.log(
-            "[Emergency] Silent autoplay succeeded, enabling audio...",
-          );
-          audio.muted = false;
-          audio.currentTime = 0;
-          audio.play().catch((err) => {
-            console.error(`[Emergency] Playback retry failed:`, err);
-            setAudioPlaybackErrors((prev) => ({
-              ...prev,
-              [phrase.id]: "Playback failed. Try downloading instead.",
-            }));
-          });
-        })
-        .catch((playError) => {
-          console.error(`[Emergency] Muted autoplay failed:`, playError);
-          setAudioPlaybackErrors((prev) => ({
-            ...prev,
-            [phrase.id]: "Autoplay blocked. Try downloading instead.",
-          }));
-        });
+      const { audioService } = await import("@/lib/audioService");
+      await audioService.playText(phrase.phrase, `emergency-${phrase.id}`);
+      console.log("[Emergency] Audio played successfully");
     } catch (err) {
-      console.error(`[Emergency] TTS failure:`, err);
+      console.error(`[Emergency] Audio Error:`, err);
       setAudioPlaybackErrors((prev) => ({
         ...prev,
-        [phrase.id]: "Unexpected error occurred.",
+        [phrase.id]: "Failed to play audio",
       }));
     } finally {
       setTimeout(() => {
@@ -437,17 +375,6 @@ const EmergencyPage = () => {
                                 <span className="text-xs text-red-500 mb-1">
                                   {audioPlaybackErrors[phrase.id]}
                                 </span>
-                                {audioUrls[phrase.id] && (
-                                  <a
-                                    href={audioUrls[phrase.id]}
-                                    download={`${phrase.phrase.replace(/\s+/g, "-").toLowerCase()}.mp3`}
-                                    className="text-xs text-blue-500 hover:underline px-2 py-1 bg-blue-50 rounded"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
-                                    {t("emergency.downloadAudio")}
-                                  </a>
-                                )}
                               </div>
                             )}
                           </div>

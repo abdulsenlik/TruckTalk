@@ -50,10 +50,10 @@ Deno.serve(async (req) => {
     const audioData = await response.arrayBuffer();
     return new Response(audioData, {
       headers: {
+        "Content-Type": "audio/mpeg", // or try audio/mp3 if needed
+        "Content-Disposition": "inline; filename=speech.mp3",
         "Access-Control-Allow-Origin": "*",
-        "Content-Type": "audio/mpeg",
       },
-      status: 200,
     });
   } catch (err) {
     console.error("TTS Error:", err);

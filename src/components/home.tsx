@@ -18,6 +18,7 @@ import { Progress } from "./ui/progress";
 import ModuleCard from "./ModuleCard";
 import LanguageSelector, { useLanguage } from "./LanguageSelector";
 import UserAuthButton from "./UserAuthButton";
+import { audioService } from "@/lib/audioService";
 
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
@@ -331,110 +332,17 @@ const Home = () => {
                                 item.phrase,
                               );
 
-                              const { supabase } = await import(
-                                "@/lib/supabase"
+                              await audioService.playText(
+                                item.phrase,
+                                `emergency-${index}`,
                               );
-
-                              console.log("[Home] Calling TTS service...");
-                              const { data, error } =
-                                await supabase.functions.invoke(
-                                  "supabase-functions-text-to-speech",
-                                  {
-                                    body: { text: item.phrase },
-                                  },
-                                );
-
-                              console.log("[Home] TTS service response:", {
-                                data,
-                                error,
-                              });
-
-                              if (error) {
-                                console.error(
-                                  "[Home] TTS service error:",
-                                  error,
-                                );
-                                toast({
-                                  title: "Audio Error",
-                                  description: `TTS service failed: ${error.message || "Unknown error"}`,
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-
-                              const audioUrl = data?.audioUrl;
-                              if (!audioUrl) {
-                                console.error(
-                                  "[Home] No audioUrl in response:",
-                                  data,
-                                );
-                                toast({
-                                  title: "Audio Error",
-                                  description:
-                                    "No audio URL received from server.",
-                                  variant: "destructive",
-                                });
-                                return;
-                              }
-
-                              console.log(
-                                "[Home] Creating audio element with URL type:",
-                                audioUrl.substring(0, 50),
-                              );
-                              const audio = new Audio(audioUrl);
-
-                              // Set audio properties for better browser compatibility
-                              audio.preload = "auto";
-                              audio.playsInline = true;
-
-                              // Handle audio events
-                              audio.addEventListener("canplaythrough", () => {
-                                console.log("[Home] Audio can play through");
-                              });
-
-                              audio.addEventListener("error", (e) => {
-                                console.error("[Home] Audio element error:", e);
-                                toast({
-                                  title: "Playback Error",
-                                  description:
-                                    "Failed to play audio. Check your connection.",
-                                  variant: "destructive",
-                                });
-                              });
-
-                              try {
-                                await audio.play();
-                                console.log("[Home] Audio played successfully");
-                              } catch (playError) {
-                                console.error(
-                                  "[Home] Audio play error:",
-                                  playError,
-                                );
-                                // Fallback: offer download if autoplay is blocked
-                                if (playError.name === "NotAllowedError") {
-                                  toast({
-                                    title: "Autoplay Blocked",
-                                    description:
-                                      "Click to download the audio file instead.",
-                                  });
-                                  const link = document.createElement("a");
-                                  link.href = audioUrl;
-                                  link.download = `${item.phrase.replace(/\s+/g, "-").toLowerCase()}.mp3`;
-                                  link.click();
-                                } else {
-                                  toast({
-                                    title: "Playback Failed",
-                                    description:
-                                      "Unable to play audio. Please try again.",
-                                    variant: "destructive",
-                                  });
-                                }
-                              }
+                              console.log("[Home] Audio played successfully");
                             } catch (error) {
-                              console.error("[Home] TTS Error:", error);
+                              console.error("[Home] Audio Error:", error);
                               toast({
-                                title: "Error",
-                                description: `Failed to generate audio: ${error instanceof Error ? error.message : "Unknown error"}`,
+                                title: "Audio Error",
+                                description:
+                                  "Failed to play audio. Please try again.",
                                 variant: "destructive",
                               });
                             }

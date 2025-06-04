@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Search, Filter } from "lucide-react";
+import { ArrowLeft, Search, Filter, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/select";
 import ModuleCard from "@/components/ModuleCard";
 import LanguageSelector, { useLanguage } from "@/components/LanguageSelector";
+import InAppReminder from "@/components/InAppReminder";
+import { useSubscription } from "@/contexts/SubscriptionContext";
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
 // Helper function to get appropriate image for each section
@@ -55,14 +57,25 @@ const modules = trafficStopCourse.map((section, index) => ({
   completion: 0,
   image: getImageForSection(section.id),
   difficulty: index < 3 ? "Beginner" : index < 7 ? "Intermediate" : "Advanced",
-  isLocked: false, // Remove premium firewall
+  isLocked: index >= 2, // Lock modules beyond the first 2 for free users
+  requiredTier: index >= 2 ? "pro" : "free",
 }));
 
 const ModulesPage = () => {
   const navigate = useNavigate();
   const { t } = useLanguage();
+  const { currentTier, features, showUpgradeModal } = useSubscription();
   const [searchQuery, setSearchQuery] = useState("");
   const [difficultyFilter, setDifficultyFilter] = useState("all");
+  const [showReminder, setShowReminder] = useState(true);
+
+  const handleModuleClick = (module: any) => {
+    if (module.isLocked && currentTier === "free") {
+      showUpgradeModal("All Modules Access");
+      return;
+    }
+    navigate(`/module/${module.id}`);
+  };
 
   const filteredModules = modules.filter((module) => {
     const matchesSearch = module.title
@@ -101,6 +114,44 @@ const ModulesPage = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
+        {/* Subscription Status & Reminder */}
+        {currentTier === "free" && showReminder && (
+          <div className="mb-6">
+            <InAppReminder
+              trigger="module_progress"
+              onDismiss={() => setShowReminder(false)}
+            />
+          </div>
+        )}
+
+        {/* Plan Status */}
+        <div className="bg-gradient-to-r from-primary/5 to-purple-500/5 rounded-lg p-4 mb-8 border border-primary/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-lg capitalize">
+                {currentTier} Plan
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {currentTier === "free"
+                  ? `Access to ${features.maxModules} modules • Upgrade for full access`
+                  : currentTier === "pro"
+                    ? "Full access to all modules and quizzes"
+                    : "Premium access with AI tutor and offline downloads"}
+              </p>
+            </div>
+            {currentTier !== "premium" && (
+              <Button
+                onClick={() => navigate("/pricing")}
+                size="sm"
+                className="bg-gradient-to-r from-primary to-purple-600"
+              >
+                <Crown className="h-4 w-4 mr-2" />
+                Upgrade
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Search and Filter */}
         <div className="flex flex-col md:flex-row gap-4 mb-8">
           <div className="relative flex-grow">
@@ -158,8 +209,8 @@ const ModulesPage = () => {
                 completion={module.completion}
                 image={module.image}
                 difficulty={module.difficulty}
-                isLocked={module.isLocked}
-                onClick={() => navigate(`/module/${module.id}`)}
+                isLocked={module.isLocked && currentTier === "free"}
+                onClick={() => handleModuleClick(module)}
               />
             ))}
           </div>

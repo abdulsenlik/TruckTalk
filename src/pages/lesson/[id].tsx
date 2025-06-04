@@ -22,7 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import RoleplayDialogue from "@/components/RoleplayDialogue";
 import LanguageSelector, { useLanguage } from "@/components/LanguageSelector";
-import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
+import { audioService } from "@/lib/audioService";
 
 interface VocabularyItem {
   word: string;
@@ -57,7 +57,7 @@ const LessonDetailPage = () => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const { playText, loading: ttsPlayLoading } = useElevenLabsTTS();
+  const [ttsLoading, setTtsLoading] = useState<Record<string, boolean>>({});
 
   // Parse lesson ID to get module and dialogue info
   const getLessonData = (lessonId: string): LessonData | null => {
@@ -144,21 +144,26 @@ const LessonDetailPage = () => {
   }
 
   const playVocabularyAudio = async (word: string) => {
+    const key = `vocab-${word}`;
     try {
-      await playText(word, `vocab-${word}`);
+      setTtsLoading((prev) => ({ ...prev, [key]: true }));
+      await audioService.playText(word, key);
     } catch (err) {
       console.error("Error playing vocabulary audio:", err);
+    } finally {
+      setTtsLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
   const playLineAudio = async (text: string) => {
+    const key = `line-${text.substring(0, 10).replace(/\s+/g, "-")}`;
     try {
-      await playText(
-        text,
-        `line-${text.substring(0, 10).replace(/\s+/g, "-")}`,
-      );
+      setTtsLoading((prev) => ({ ...prev, [key]: true }));
+      await audioService.playText(text, key);
     } catch (error) {
       console.error("Error playing line audio:", error);
+    } finally {
+      setTtsLoading((prev) => ({ ...prev, [key]: false }));
     }
   };
 
@@ -263,10 +268,10 @@ const LessonDetailPage = () => {
                           variant="ghost"
                           size="sm"
                           onClick={() => playVocabularyAudio(item.word)}
-                          disabled={ttsPlayLoading[`vocab-${item.word}`]}
+                          disabled={ttsLoading[`vocab-${item.word}`]}
                           className="relative overflow-hidden group"
                         >
-                          {ttsPlayLoading[`vocab-${item.word}`] ? (
+                          {ttsLoading[`vocab-${item.word}`] ? (
                             <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                           ) : (
                             <>

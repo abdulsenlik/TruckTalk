@@ -21,7 +21,7 @@ import DialoguePlayer from "@/components/DialoguePlayer";
 import RoleplayDialogue from "@/components/RoleplayDialogue";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useElevenLabsTTS } from "@/hooks/useElevenLabsTTS";
+import { audioService } from "@/lib/audioService";
 
 import LanguageSelector, { useLanguage } from "@/components/LanguageSelector";
 
@@ -88,7 +88,9 @@ const ModuleDetailPage = () => {
   const [activeTab, setActiveTab] = useState("dialogues");
   const { language, t } = useLanguage();
   const [audioLoading, setAudioLoading] = useState<Record<string, boolean>>({});
-  const { playText, loading: ttsPlayLoading } = useElevenLabsTTS();
+  const [ttsPlayLoading, setTtsPlayLoading] = useState<Record<string, boolean>>(
+    {},
+  );
 
   // Use the traffic stop course data
 
@@ -201,27 +203,35 @@ const ModuleDetailPage = () => {
   };
 
   const playVocabularyAudio = async (word: string) => {
+    const identifier = `vocab-${word}`;
+    setTtsPlayLoading((prev) => ({ ...prev, [identifier]: true }));
+
     try {
       console.log("[Module] Playing vocabulary audio for word:", word);
-      await playText(word, `vocab-${word}`);
-      console.log("[Module] Audio playback started successfully");
+      await audioService.playText(word, identifier);
+      console.log("[Module] Audio played successfully");
     } catch (err) {
-      console.error("[Module] Error playing vocabulary audio:", err);
+      console.error("[Module] Audio Error:", err);
+    } finally {
+      setTtsPlayLoading((prev) => ({ ...prev, [identifier]: false }));
     }
   };
 
   const playLineAudio = async (text: string) => {
+    const identifier = `line-${text.substring(0, 10).replace(/\s+/g, "-")}`;
+    setTtsPlayLoading((prev) => ({ ...prev, [identifier]: true }));
+
     try {
       console.log(
         "[Module] Playing line audio:",
         text.substring(0, 30) + "...",
       );
-      await playText(
-        text,
-        `line-${text.substring(0, 10).replace(/\s+/g, "-")}`,
-      );
+      await audioService.playText(text, identifier);
+      console.log("[Module] Audio played successfully");
     } catch (error) {
-      console.error("[Module] Error playing line audio:", error);
+      console.error("[Module] Audio Error:", error);
+    } finally {
+      setTtsPlayLoading((prev) => ({ ...prev, [identifier]: false }));
     }
   };
 
@@ -408,6 +418,7 @@ const ModuleDetailPage = () => {
                                     console.log(
                                       "[Module] Playing full dialogue",
                                     );
+
                                     // Play the entire dialogue sequentially
                                     for (
                                       let i = 0;
@@ -419,8 +430,7 @@ const ModuleDetailPage = () => {
                                         `[Module] Playing exchange ${i + 1}/${dialogue.exchanges.length}: "${exchange.text.substring(0, 30)}..."`,
                                       );
                                       try {
-                                        // Use the existing hook for TTS
-                                        await playText(
+                                        await audioService.playText(
                                           exchange.text,
                                           `dialogue-${i}-${exchange.speaker.toLowerCase()}`,
                                         );
@@ -435,7 +445,7 @@ const ModuleDetailPage = () => {
                                         }
                                       } catch (error) {
                                         console.error(
-                                          `[Module] Exchange ${i + 1} error with TTS process:`,
+                                          `[Module] Exchange ${i + 1} Audio Error:`,
                                           error,
                                         );
                                       }
