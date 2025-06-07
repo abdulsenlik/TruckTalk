@@ -17,6 +17,28 @@ export interface DialogueExchange {
   text: string;
 }
 
+export interface AssessmentQuestion {
+  id: string;
+  type:
+    | "multiple-choice"
+    | "fill-in-blank"
+    | "audio-based"
+    | "scenario-response"
+    | "true-false";
+  question: string;
+  audioText?: string; // For audio-based questions
+  options?: string[]; // For multiple choice
+  correctAnswer: string | number;
+  explanation: string;
+  difficulty: "beginner" | "intermediate" | "advanced";
+  skillTested:
+    | "vocabulary"
+    | "grammar"
+    | "context"
+    | "pronunciation"
+    | "practical-application";
+}
+
 export interface Section {
   id: string;
   title: string;
@@ -27,6 +49,7 @@ export interface Section {
     exchanges: DialogueExchange[];
   }[];
   tips: string[];
+  assessments: AssessmentQuestion[];
 }
 
 export const trafficStopCourse: Section[] = [
@@ -259,7 +282,7 @@ export const trafficStopCourse: Section[] = [
     ],
     dialogues: [
       {
-        title: "Being Pulled Over",
+        title: "Being Pulled Over - Polite Officer, Nervous Driver",
         exchanges: [
           {
             speaker: "Officer",
@@ -295,6 +318,80 @@ export const trafficStopCourse: Section[] = [
           },
         ],
       },
+      {
+        title: "Being Pulled Over - Formal Officer, Confident Driver",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "Sir, I'm Officer Martinez with the State Police. Please provide your commercial driver's license, vehicle registration, and proof of insurance.",
+          },
+          {
+            speaker: "Driver",
+            text: "Good evening, Officer Martinez. Here are my documents. My CDL, registration, and current insurance card. Is there a specific reason for this stop?",
+          },
+          {
+            speaker: "Officer",
+            text: "I clocked you at 68 miles per hour in a posted 55 mile per hour zone. Are you aware of the speed limit on this stretch of highway?",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, officer, I am aware it's 55. I apologize - I was maintaining pace with traffic flow, but I understand that doesn't excuse exceeding the limit. I should have been more attentive.",
+          },
+          {
+            speaker: "Officer",
+            text: "Traffic flow is not a legal defense for speeding. What's your destination and purpose of travel?",
+          },
+          {
+            speaker: "Driver",
+            text: "I'm delivering manufactured goods to a distribution center in Columbus. I have the bill of lading here if you need to see it. I've been driving this route for three years without any violations.",
+          },
+          {
+            speaker: "Officer",
+            text: "That won't be necessary. Given your clean record, I'm issuing a written warning today. Please be more mindful of posted speed limits, especially in commercial vehicles.",
+          },
+          {
+            speaker: "Driver",
+            text: "Thank you, officer. I appreciate the warning and will definitely be more careful. I understand the responsibility that comes with operating a commercial vehicle.",
+          },
+        ],
+      },
+      {
+        title: "Being Pulled Over - Stern Officer, Confused Driver",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "Turn off your engine and step out of the vehicle. Keep your hands visible at all times.",
+          },
+          {
+            speaker: "Driver",
+            text: "Officer, I... I don't understand. What did I do wrong? Should I get out? I'm sorry, I'm confused.",
+          },
+          {
+            speaker: "Officer",
+            text: "You were weaving between lanes and driving erratically. Have you been drinking or taking any medications today?",
+          },
+          {
+            speaker: "Driver",
+            text: "No, no alcohol, officer! I don't drink. I was... I was looking at my GPS because I got lost. I know that was wrong. I'm very sorry.",
+          },
+          {
+            speaker: "Officer",
+            text: "Looking at GPS while driving is distracted driving. You could have caused a serious accident. How long have you been driving commercially?",
+          },
+          {
+            speaker: "Driver",
+            text: "Only six months, officer. I'm still learning. I know I made a mistake. I should have pulled over to check the GPS. I was scared I would be late for delivery.",
+          },
+          {
+            speaker: "Officer",
+            text: "Being late is not worth risking lives. I'm issuing you a citation for distracted driving. You need to attend a safety course within 30 days.",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, officer. I understand. I will take the course. I promise to be more careful. Thank you for teaching me this important lesson about safety.",
+          },
+        ],
+      },
     ],
     tips: [
       "Always keep your hands visible on the steering wheel until instructed otherwise",
@@ -302,6 +399,78 @@ export const trafficStopCourse: Section[] = [
       "Move slowly when reaching for documents",
       "Inform the officer before reaching for documents: 'My license is in my wallet. May I reach for it?'",
       "Never exit your vehicle unless instructed to do so",
+    ],
+    assessments: [
+      {
+        id: "initial-stop-q1",
+        type: "multiple-choice",
+        question:
+          "What should you do with your hands when an officer first approaches your vehicle?",
+        options: [
+          "Hide them under the steering wheel",
+          "Keep them visible on the steering wheel",
+          "Put them in your pockets",
+          "Wave them at the officer",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Keeping your hands visible on the steering wheel shows the officer you are not a threat and helps create a safe interaction.",
+        difficulty: "beginner",
+        skillTested: "practical-application",
+      },
+      {
+        id: "initial-stop-q2",
+        type: "fill-in-blank",
+        question:
+          "Complete this polite response: 'Good afternoon, _______. Here are my documents.'",
+        correctAnswer: "officer",
+        explanation:
+          "Always address law enforcement officers as 'officer' to show respect and professionalism.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "initial-stop-q3",
+        type: "audio-based",
+        question:
+          "Listen to this phrase and identify what the officer is requesting:",
+        audioText:
+          "I need to see your license, registration, and insurance please.",
+        correctAnswer:
+          "The officer is requesting three documents: license, registration, and insurance",
+        explanation:
+          "Officers typically request these three essential documents during a traffic stop. Understanding this request quickly helps the interaction go smoothly.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "initial-stop-q4",
+        type: "scenario-response",
+        question:
+          "An officer says: 'Do you know why I pulled you over?' You were speeding but want to be honest. What's the best response?",
+        options: [
+          "No, I have no idea why you stopped me.",
+          "I think I might have been going a little fast, officer. I apologize.",
+          "Everyone else was speeding too!",
+          "This is unfair, I wasn't doing anything wrong.",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Being honest and apologetic while taking responsibility shows respect and may lead to more lenient treatment.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
+      {
+        id: "initial-stop-q5",
+        type: "true-false",
+        question:
+          "True or False: You should immediately get out of your truck when an officer pulls you over to show cooperation.",
+        correctAnswer: "False",
+        explanation:
+          "Never exit your vehicle unless specifically instructed by the officer. Staying in your vehicle is safer and follows proper protocol.",
+        difficulty: "beginner",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -533,7 +702,7 @@ export const trafficStopCourse: Section[] = [
     ],
     dialogues: [
       {
-        title: "Checking Documents",
+        title: "Document Check - Routine Inspection, Organized Driver",
         exchanges: [
           {
             speaker: "Officer",
@@ -569,6 +738,80 @@ export const trafficStopCourse: Section[] = [
           },
         ],
       },
+      {
+        title: "Document Check - Strict Officer, Hours Violation",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "This is a DOT compliance inspection. I need your CDL, medical certificate, hours of service records, and vehicle inspection reports. Now.",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, sir. Here is my CDL and medical card. Let me get my ELD... Officer, I want to be honest - I think I might have a small problem with my hours today.",
+          },
+          {
+            speaker: "Officer",
+            text: "What kind of problem? Show me your electronic logs immediately.",
+          },
+          {
+            speaker: "Driver",
+            text: "I was supposed to take my 10-hour break, but my dispatcher asked me to make an urgent delivery. I only rested for 8 hours. I know this was wrong, but I was afraid to say no to my company.",
+          },
+          {
+            speaker: "Officer",
+            text: "That's a serious hours of service violation. You're putting yourself and other drivers at risk. Your company cannot force you to violate federal regulations.",
+          },
+          {
+            speaker: "Driver",
+            text: "I understand now, officer. I should have refused the dispatch. What happens next? Will I lose my CDL? This job is how I support my family.",
+          },
+          {
+            speaker: "Officer",
+            text: "You're going out of service for 10 hours to complete your required rest period. I'm also issuing citations to both you and your company. You need to learn to say no when safety is at stake.",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, officer. I will never make this mistake again. Thank you for teaching me that safety rules are more important than company pressure. I will find a safe place to rest.",
+          },
+        ],
+      },
+      {
+        title: "Document Check - New Driver, Missing Paperwork",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "Good morning. Routine inspection. Please provide your CDL, medical certificate, insurance, and current logbook.",
+          },
+          {
+            speaker: "Driver",
+            text: "Good morning, officer. Here is my CDL and... oh no... I think I forgot my medical certificate at home. I just got my CDL last month. I'm still learning what I need to carry.",
+          },
+          {
+            speaker: "Officer",
+            text: "You're required to carry your medical certificate at all times while operating a commercial vehicle. Do you have a copy on your phone or in your ELD system?",
+          },
+          {
+            speaker: "Driver",
+            text: "Let me check... Yes! I have a photo of it on my phone. Is that okay? I'm sorry, I'm very new to this. My trainer told me about this, but I forgot.",
+          },
+          {
+            speaker: "Officer",
+            text: "A photo will work for now, but you need to get a physical copy. What about your hours of service records? Show me your logbook or ELD.",
+          },
+          {
+            speaker: "Driver",
+            text: "Here is my ELD tablet, officer. I've only been driving for three weeks, so there's not much history. My company trained me on this system, but I'm still nervous about making mistakes.",
+          },
+          {
+            speaker: "Officer",
+            text: "Your hours look fine. I'm giving you a warning about the medical certificate. Always carry the original document. Being new is not an excuse - these are federal requirements.",
+          },
+          {
+            speaker: "Driver",
+            text: "Thank you for the warning, officer. I will get a copy of my medical certificate today and always keep it with me. I appreciate your patience with a new driver.",
+          },
+        ],
+      },
     ],
     tips: [
       "Keep all documents organized and easily accessible",
@@ -576,6 +819,77 @@ export const trafficStopCourse: Section[] = [
       "Know how to access and display your electronic logs",
       "Make sure all your documents are current and not expired",
       "Be familiar with how to show your Hours of Service records",
+    ],
+    assessments: [
+      {
+        id: "document-check-q1",
+        type: "multiple-choice",
+        question: "What does CDL stand for?",
+        options: [
+          "Commercial Driver's License",
+          "Certified Driving License",
+          "Commercial Delivery License",
+          "Certified Driver's License",
+        ],
+        correctAnswer: 0,
+        explanation:
+          "CDL stands for Commercial Driver's License, which is required to operate commercial vehicles like trucks.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "document-check-q2",
+        type: "fill-in-blank",
+        question:
+          "An officer asks about your hours. You respond: 'I use an _______ to track my driving hours automatically.'",
+        correctAnswer: "ELD",
+        explanation:
+          "ELD stands for Electronic Logging Device, which automatically records driving hours and duty status.",
+        difficulty: "intermediate",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "document-check-q3",
+        type: "scenario-response",
+        question:
+          "An officer finds that you only rested 8 hours instead of the required 10 hours because your dispatcher pressured you. What should you say?",
+        options: [
+          "My dispatcher made me do it, it's not my fault.",
+          "I know this was wrong. I should have refused the dispatch. Safety rules are more important than company pressure.",
+          "Everyone does this, it's normal in trucking.",
+          "I didn't know about the 10-hour rule.",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Taking responsibility and acknowledging that safety rules come before company pressure shows maturity and understanding of regulations.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "document-check-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's request and identify what documents are needed:",
+        audioText:
+          "I need your CDL, medical certificate, hours of service records, and vehicle inspection reports.",
+        correctAnswer:
+          "CDL, medical certificate, hours of service records, and vehicle inspection reports",
+        explanation:
+          "During a DOT compliance inspection, officers typically request these four key documents to verify driver qualifications and vehicle safety.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "document-check-q5",
+        type: "true-false",
+        question:
+          "True or False: If you forget your medical certificate at home, a photo on your phone is acceptable as a permanent solution.",
+        correctAnswer: "False",
+        explanation:
+          "While a photo may work temporarily, you are required to carry the original physical medical certificate at all times while operating a commercial vehicle.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -807,7 +1121,7 @@ export const trafficStopCourse: Section[] = [
     ],
     dialogues: [
       {
-        title: "Level 2 Inspection",
+        title: "Level 2 Inspection - Routine Check, Well-Maintained Vehicle",
         exchanges: [
           {
             speaker: "Officer",
@@ -843,6 +1157,80 @@ export const trafficStopCourse: Section[] = [
           },
         ],
       },
+      {
+        title: "Level 1 Inspection - Thorough Check, Safety Violations Found",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "This is a Level 1 DOT inspection. I'll be checking your vehicle thoroughly and your driver qualifications. Step out and bring all your paperwork.",
+          },
+          {
+            speaker: "Driver",
+            text: "Level 1? That sounds serious, officer. I hope everything is okay. Here are my documents. I try to maintain my truck well, but sometimes things break unexpectedly.",
+          },
+          {
+            speaker: "Officer",
+            text: "We'll see. Turn on your headlights... I can see your left headlight is significantly dimmer than the right. When did you last check your lights?",
+          },
+          {
+            speaker: "Driver",
+            text: "I check them every morning during pre-trip, officer. The left one was working this morning, but maybe it's getting weak? I didn't notice it was dimmer.",
+          },
+          {
+            speaker: "Officer",
+            text: "Now test your air brakes. Apply and release... I'm hearing an air leak. Do you hear that hissing sound? That's a serious safety issue.",
+          },
+          {
+            speaker: "Driver",
+            text: "Oh no, I do hear it now. I thought that was normal air system noise. I'm not very experienced with air brake systems yet. Is this dangerous?",
+          },
+          {
+            speaker: "Officer",
+            text: "Very dangerous. I'm placing this vehicle out of service until repairs are made. You cannot drive with faulty brakes. You'll need to call for roadside service.",
+          },
+          {
+            speaker: "Driver",
+            text: "I understand, officer. Safety is most important. I'll call my company right now. Thank you for catching this problem before something bad happened. I need to learn more about air brake maintenance.",
+          },
+        ],
+      },
+      {
+        title: "Level 3 Inspection - Driver-Only Check, Impatient Officer",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "Driver inspection only. I don't have time for a full vehicle check. Show me your license, medical card, and logbook. Make it quick.",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, officer. Here they are. Is everything okay? You seem like you're in a hurry. I don't want to slow you down.",
+          },
+          {
+            speaker: "Officer",
+            text: "I've got three more stops to make before my shift ends. Your medical certificate expires next month. Are you aware of that?",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, officer. I have an appointment with the doctor next week. My company reminds us about renewals. I always renew early to avoid problems.",
+          },
+          {
+            speaker: "Officer",
+            text: "Good. Your hours look fine. Any violations or accidents in the past year?",
+          },
+          {
+            speaker: "Driver",
+            text: "No violations, no accidents, officer. I try to drive very carefully. I know one mistake can cost me my job and my family's income.",
+          },
+          {
+            speaker: "Officer",
+            text: "Keep it that way. You're clear to go. Drive safely and get that medical certificate renewed on time.",
+          },
+          {
+            speaker: "Driver",
+            text: "Thank you, officer. I will definitely renew it early. Have a safe rest of your shift.",
+          },
+        ],
+      },
     ],
     tips: [
       "Follow all instructions carefully and promptly",
@@ -850,6 +1238,75 @@ export const trafficStopCourse: Section[] = [
       "Know the basic components of your vehicle",
       "Be familiar with how to operate all vehicle systems",
       "If you don't understand an instruction, ask for clarification",
+    ],
+    assessments: [
+      {
+        id: "vehicle-inspection-q1",
+        type: "multiple-choice",
+        question: "What does 'out of service' mean for your vehicle?",
+        options: [
+          "You can drive slowly to a repair shop",
+          "You cannot drive until repairs are made",
+          "You can drive only during daytime",
+          "You need to call your dispatcher first",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "When a vehicle is placed 'out of service,' it cannot be driven at all until the safety violations are repaired and cleared.",
+        difficulty: "intermediate",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "vehicle-inspection-q2",
+        type: "fill-in-blank",
+        question:
+          "The officer says: 'Turn on your _______, turn signals, brake lights, and hazard lights.'",
+        correctAnswer: "headlights",
+        explanation:
+          "During vehicle inspections, officers check all lighting systems including headlights, turn signals, brake lights, and hazard lights.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "vehicle-inspection-q3",
+        type: "scenario-response",
+        question:
+          "During inspection, the officer finds an air brake leak. You didn't notice it before. What's your best response?",
+        options: [
+          "That's impossible, my brakes were fine this morning.",
+          "I do hear it now. I thought that was normal air system noise. I need to learn more about air brake maintenance.",
+          "My company mechanic said small leaks are okay.",
+          "I'll fix it when I get home.",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Admitting you didn't recognize the problem and showing willingness to learn demonstrates responsibility and safety awareness.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "vehicle-inspection-q4",
+        type: "audio-based",
+        question:
+          "Listen to this instruction and identify what the officer wants you to do:",
+        audioText: "Pop the hood so I can inspect the engine compartment.",
+        correctAnswer: "Open the hood to allow engine inspection",
+        explanation:
+          "'Pop the hood' means to open the hood of the truck so the officer can inspect the engine compartment for safety violations.",
+        difficulty: "beginner",
+        skillTested: "context",
+      },
+      {
+        id: "vehicle-inspection-q5",
+        type: "true-false",
+        question:
+          "True or False: If your headlight is dimmer than normal but still working, it's not a safety violation.",
+        correctAnswer: "False",
+        explanation:
+          "A significantly dimmer headlight is considered a safety violation because it reduces visibility and doesn't provide adequate illumination.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -1081,7 +1538,7 @@ export const trafficStopCourse: Section[] = [
     ],
     dialogues: [
       {
-        title: "Explaining a Mechanical Issue",
+        title: "Mechanical Issue - Brake Light Out, Cooperative Driver",
         exchanges: [
           {
             speaker: "Officer",
@@ -1117,6 +1574,80 @@ export const trafficStopCourse: Section[] = [
           },
         ],
       },
+      {
+        title: "GPS Navigation Problem - Defensive Driver",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "I pulled you over because you were driving very slowly and holding up traffic. You were going 45 in a 65 zone. What's the problem?",
+          },
+          {
+            speaker: "Driver",
+            text: "I'm sorry, officer. My GPS stopped working about 20 miles back, and I'm completely lost. I was driving slowly because I don't know where I am and I was looking for road signs.",
+          },
+          {
+            speaker: "Officer",
+            text: "Looking for signs while driving is dangerous. You should have pulled over. Where are you trying to go?",
+          },
+          {
+            speaker: "Driver",
+            text: "I need to get to the Walmart distribution center in Springfield, but I don't know which exit to take. I've never been to this area before, and without GPS, I'm completely confused.",
+          },
+          {
+            speaker: "Officer",
+            text: "You're about 15 miles away. Take exit 47 and follow the signs for Industrial Boulevard. But you can't drive that slowly on the highway - it's dangerous.",
+          },
+          {
+            speaker: "Driver",
+            text: "You're absolutely right, officer. I was so worried about getting lost that I forgot about traffic safety. I should have pulled over at a truck stop to ask for directions.",
+          },
+          {
+            speaker: "Officer",
+            text: "Exactly. Next time, find a safe place to stop and get help. I'm giving you a warning, but maintain proper highway speed from now on.",
+          },
+          {
+            speaker: "Driver",
+            text: "Thank you for the directions and the warning, officer. I will drive at proper speed and pull over safely if I need help again. I learned an important lesson today.",
+          },
+        ],
+      },
+      {
+        title: "Company Pressure Situation - Stressed Driver",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "You were tailgating that car pretty closely back there. That's dangerous, especially in a truck this size. What's going on?",
+          },
+          {
+            speaker: "Driver",
+            text: "I know, officer, I know it was wrong. I'm under a lot of pressure from my dispatcher. They keep calling me saying I'm behind schedule and the customer is complaining.",
+          },
+          {
+            speaker: "Officer",
+            text: "Company pressure is not an excuse for unsafe driving. You could have killed someone. How long have you been driving today?",
+          },
+          {
+            speaker: "Driver",
+            text: "About 9 hours, officer. I'm tired and stressed. My company keeps giving me impossible delivery times, and I'm afraid if I'm late too many times, they'll fire me.",
+          },
+          {
+            speaker: "Officer",
+            text: "Your company cannot force you to drive unsafely. You have the right to refuse unsafe dispatch orders. Being fired is better than causing a fatal accident.",
+          },
+          {
+            speaker: "Driver",
+            text: "I never thought about it that way, officer. I have a family to support, so I always try to do what the company wants. But you're right - safety should come first.",
+          },
+          {
+            speaker: "Officer",
+            text: "I'm issuing you a citation for following too closely. Use this as a wake-up call. No job is worth risking lives over.",
+          },
+          {
+            speaker: "Driver",
+            text: "I understand, officer. I will talk to my dispatcher about realistic delivery times. Thank you for reminding me that safety is more important than company pressure.",
+          },
+        ],
+      },
     ],
     tips: [
       "Take responsibility for mistakes without making excuses",
@@ -1124,6 +1655,76 @@ export const trafficStopCourse: Section[] = [
       "Explain problems clearly and directly",
       "Never blame your company or dispatcher when explaining situations",
       "If you're lost or confused about directions, it's okay to admit this",
+    ],
+    assessments: [
+      {
+        id: "explaining-situations-q1",
+        type: "multiple-choice",
+        question: "What does 'GPS' stand for?",
+        options: [
+          "Global Positioning System",
+          "General Purpose System",
+          "Geographic Position Sensor",
+          "Global Position Sensor",
+        ],
+        correctAnswer: 0,
+        explanation:
+          "GPS stands for Global Positioning System, a navigation system that helps drivers find their way.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "explaining-situations-q2",
+        type: "fill-in-blank",
+        question:
+          "When explaining a problem, you should say: 'Let me _______ what happened, officer.'",
+        correctAnswer: "explain",
+        explanation:
+          "Using 'explain' shows you want to provide a clear, detailed account of the situation to help the officer understand.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "explaining-situations-q3",
+        type: "scenario-response",
+        question:
+          "Your dispatcher pressured you to drive unsafely, and now you're in trouble. How should you explain this to the officer?",
+        options: [
+          "My dispatcher made me do it, so it's their fault.",
+          "I was under pressure from my company, but I know I should have refused. I take full responsibility for my mistake.",
+          "Everyone in trucking does this because of company pressure.",
+          "I had no choice because I need this job.",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Taking personal responsibility while acknowledging the pressure shows maturity and understanding that safety comes first.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "explaining-situations-q4",
+        type: "audio-based",
+        question:
+          "Listen to this driver's explanation and identify the main problem:",
+        audioText:
+          "I'm sorry, officer. My GPS stopped working about 20 miles back, and I'm completely lost. I was driving slowly because I don't know where I am.",
+        correctAnswer: "The driver's GPS stopped working and they got lost",
+        explanation:
+          "The driver clearly explains that their navigation system failed, causing them to become lost and drive slowly while looking for signs.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "explaining-situations-q5",
+        type: "true-false",
+        question:
+          "True or False: When explaining a mechanical problem, you should blame your company's maintenance department.",
+        correctAnswer: "False",
+        explanation:
+          "You should explain the situation factually without blaming others. Focus on what happened and what you're doing to fix it.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -1356,7 +1957,7 @@ export const trafficStopCourse: Section[] = [
     ],
     dialogues: [
       {
-        title: "Receiving a Speeding Ticket",
+        title: "Speeding Ticket - Patient Officer, First-Time Offender",
         exchanges: [
           {
             speaker: "Officer",
@@ -1392,6 +1993,80 @@ export const trafficStopCourse: Section[] = [
           },
         ],
       },
+      {
+        title: "Multiple Violations - Strict Officer, Repeat Offender",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "I'm issuing multiple citations today. Speeding 15 over the limit, following too closely, and improper lane change. This is serious.",
+          },
+          {
+            speaker: "Driver",
+            text: "Multiple tickets? Officer, I was just trying to keep up with traffic. Everyone else was driving the same speed. This doesn't seem fair.",
+          },
+          {
+            speaker: "Officer",
+            text: "Don't argue with me about fairness. I observed three separate violations. Your driving record shows two previous speeding tickets this year. You're becoming a habitual offender.",
+          },
+          {
+            speaker: "Driver",
+            text: "I... I didn't realize my driving was that bad. Those other tickets were minor. I'm just trying to make a living and support my family.",
+          },
+          {
+            speaker: "Officer",
+            text: "Your CDL is at risk with this pattern of violations. The total fines are $485. You need to attend mandatory driver improvement classes within 60 days or face license suspension.",
+          },
+          {
+            speaker: "Driver",
+            text: "$485? That's almost a week's pay! And driver classes? Officer, I can't afford to lose my license. What can I do to fix this situation?",
+          },
+          {
+            speaker: "Officer",
+            text: "Start by changing your driving habits immediately. Sign here, here, and here. The court dates are different for each violation. Don't miss any of them.",
+          },
+          {
+            speaker: "Driver",
+            text: "I understand, officer. I will sign everything and attend all court dates. I promise to drive more carefully from now on. I can't afford to lose my job.",
+          },
+        ],
+      },
+      {
+        title: "Equipment Violation - Understanding Officer, Maintenance Issue",
+        exchanges: [
+          {
+            speaker: "Officer",
+            text: "I'm citing you for a cracked windshield and worn tires. These are safety violations that need immediate attention.",
+          },
+          {
+            speaker: "Driver",
+            text: "Officer, I reported both of these problems to my company last week. They told me to keep driving until they could schedule repairs. I have the work order here.",
+          },
+          {
+            speaker: "Officer",
+            text: "Let me see that work order. Your company scheduled repairs for next month? That's unacceptable. These are immediate safety hazards.",
+          },
+          {
+            speaker: "Driver",
+            text: "I agree, officer. I was uncomfortable driving with these problems, but my supervisor said the truck was still legal to operate. I should have refused to drive it.",
+          },
+          {
+            speaker: "Officer",
+            text: "You have the right to refuse to operate an unsafe vehicle. I'm placing this truck out of service until repairs are completed. The citations are going to your company, not you personally.",
+          },
+          {
+            speaker: "Driver",
+            text: "Thank you for understanding, officer. I was afraid to refuse because I'm still new and didn't want to cause problems. Now I know I have the right to say no to unsafe equipment.",
+          },
+          {
+            speaker: "Officer",
+            text: "Exactly. Your safety and public safety come first. Call your company and tell them the truck is out of service by DOT order. They need to send a replacement or repair truck immediately.",
+          },
+          {
+            speaker: "Driver",
+            text: "I will call them right now, officer. Thank you for protecting me and teaching me about my rights. I will never drive unsafe equipment again, no matter what my company says.",
+          },
+        ],
+      },
     ],
     tips: [
       "Signing a ticket is not admitting guilt - it only acknowledges that you received it",
@@ -1399,6 +2074,77 @@ export const trafficStopCourse: Section[] = [
       "Remain calm and professional when receiving a citation",
       "Ask for clarification if you don't understand any part of the citation",
       "Keep all citation paperwork in a safe place",
+    ],
+    assessments: [
+      {
+        id: "citations-tickets-q1",
+        type: "multiple-choice",
+        question: "What does signing a citation mean?",
+        options: [
+          "You are admitting guilt",
+          "You are acknowledging receipt of the citation",
+          "You agree to pay the fine immediately",
+          "You are waiving your right to contest it",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Signing a citation only means you acknowledge receiving it, not that you admit guilt or agree with the violation.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
+      {
+        id: "citations-tickets-q2",
+        type: "fill-in-blank",
+        question:
+          "The officer says: 'You can pay the _______ or contest it in court.'",
+        correctAnswer: "fine",
+        explanation:
+          "A fine is the monetary penalty you must pay for a traffic violation, though you have the right to contest it in court.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "citations-tickets-q3",
+        type: "scenario-response",
+        question:
+          "You receive multiple citations totaling $485. You can't afford this and think it's unfair. What should you do?",
+        options: [
+          "Argue with the officer about the unfairness",
+          "Refuse to sign the citations",
+          "Sign the citations and consider contesting them in court",
+          "Ask the officer to reduce the fines",
+        ],
+        correctAnswer: 2,
+        explanation:
+          "Sign the citations (which doesn't admit guilt) and then decide whether to contest them in court, where you can present your case properly.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "citations-tickets-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's explanation and identify the key information:",
+        audioText:
+          "The fine is $150. You have 30 days to either pay online or appear in court. The website and court address are on the back.",
+        correctAnswer:
+          "Fine is $150, 30 days to pay or go to court, information is on the back of the citation",
+        explanation:
+          "The officer provides three key pieces of information: the fine amount, the time limit, and where to find payment/court information.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "citations-tickets-q5",
+        type: "true-false",
+        question:
+          "True or False: You should argue with the officer if you believe the citation is unfair.",
+        correctAnswer: "False",
+        explanation:
+          "Never argue with an officer about a citation. The proper place to contest a citation is in court, not during the traffic stop.",
+        difficulty: "beginner",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -1630,7 +2376,7 @@ export const trafficStopCourse: Section[] = [
     ],
     dialogues: [
       {
-        title: "Reporting an Accident",
+        title: "Reporting Accident - Witness, Clear Communication",
         exchanges: [
           {
             speaker: "Driver",
@@ -1661,8 +2407,82 @@ export const trafficStopCourse: Section[] = [
             text: "Yes, officer. It was just past the big blue water tower, maybe near mile marker 127. There were two cars - a red car and a white SUV. The red car was in the ditch. Should I go back to help?",
           },
           {
-            speaker: "Driver",
+            speaker: "Officer",
             text: "No, stay here with me. Emergency vehicles are on the way. You've done enough by reporting it. Can you tell me exactly what you saw happen? This information will be very important for the investigation.",
+          },
+        ],
+      },
+      {
+        title: "Truck Fire Emergency - Urgent Situation, Panicked Driver",
+        exchanges: [
+          {
+            speaker: "Driver",
+            text: "Help! Help! My truck is on fire! There's smoke coming from the engine! I don't know what to do!",
+          },
+          {
+            speaker: "Officer",
+            text: "Calm down! Are you injured? Did you get away from the vehicle safely?",
+          },
+          {
+            speaker: "Driver",
+            text: "I'm okay, but I'm scared! The smoke is getting thicker! I have cargo in the trailer - what if it catches fire too? Should I try to move the truck?",
+          },
+          {
+            speaker: "Officer",
+            text: "NO! Do not go near the truck! Stay back at least 100 feet. What kind of cargo are you carrying? Anything hazardous?",
+          },
+          {
+            speaker: "Driver",
+            text: "Just furniture, officer. No chemicals or dangerous things. But this is my company's truck! They're going to be so angry with me! What will I tell them?",
+          },
+          {
+            speaker: "Officer",
+            text: "This is not your fault. Mechanical failures happen. I'm calling the fire department now. Do you have a fire extinguisher in your truck?",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes, but the fire is too big now! I tried to use it when I first saw smoke, but it didn't work. The flames are getting bigger!",
+          },
+          {
+            speaker: "Officer",
+            text: "You did the right thing by getting away from the truck. Fire department is 5 minutes out. Stay here with me and don't worry about your company - your safety is what matters most.",
+          },
+        ],
+      },
+      {
+        title: "Medical Emergency - Heart Attack, Language Barrier",
+        exchanges: [
+          {
+            speaker: "Driver",
+            text: "Officer... help... I think... I think I'm having heart attack. My chest... it hurts very bad. I can't breathe good.",
+          },
+          {
+            speaker: "Officer",
+            text: "Okay, sit down right here. Don't move. I'm calling an ambulance right now. Can you tell me your name and age?",
+          },
+          {
+            speaker: "Driver",
+            text: "My name is... is Dmitri. I am 52 years old. The pain is very strong. I'm scared, officer. I don't want to die here.",
+          },
+          {
+            speaker: "Officer",
+            text: "You're going to be okay, Dmitri. Help is coming. Do you take any heart medication? Any pills in your truck?",
+          },
+          {
+            speaker: "Driver",
+            text: "Yes... yes, I have pills. In my bag in the truck. Small white bottle. But I can't... I can't walk to get them.",
+          },
+          {
+            speaker: "Officer",
+            text: "I'll get them for you. Stay right here and try to breathe slowly. The ambulance will be here in 3 minutes. What's your wife's phone number?",
+          },
+          {
+            speaker: "Driver",
+            text: "Her number is... 555-0123. Please tell her I'm okay. Tell her I'm at... where are we? I don't know this place.",
+          },
+          {
+            speaker: "Officer",
+            text: "We're at mile marker 89 on Interstate 75. I'll call her after the paramedics check you. Here are your pills. The ambulance is here now - you're going to be fine.",
           },
         ],
       },
@@ -1673,6 +2493,78 @@ export const trafficStopCourse: Section[] = [
       "Learn the phrase 'This is an emergency' - it will help officers understand the urgency",
       "Know how to describe your exact location - mile markers, exits, or landmarks are helpful",
       "If you witness an accident but aren't involved, you still have a duty to report it",
+    ],
+    assessments: [
+      {
+        id: "emergency-situations-q1",
+        type: "multiple-choice",
+        question:
+          "What is the most important thing to communicate first in an emergency?",
+        options: [
+          "Your name and company",
+          "That this is an emergency and people need help",
+          "The weather conditions",
+          "Your truck's license plate number",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "In emergencies, immediately communicate that it's an emergency and that people need help. This ensures the officer understands the urgency.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
+      {
+        id: "emergency-situations-q2",
+        type: "fill-in-blank",
+        question:
+          "To report an accident location, you say: 'The accident is near _______ marker 127.'",
+        correctAnswer: "mile",
+        explanation:
+          "Mile markers are roadside signs that help identify exact locations on highways, making it easier for emergency services to find accidents.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "emergency-situations-q3",
+        type: "scenario-response",
+        question:
+          "Your truck engine catches fire. The officer asks about your cargo. What should you tell them?",
+        options: [
+          "I don't know what's in the trailer",
+          "Just furniture, officer. No chemicals or dangerous things.",
+          "It doesn't matter, just put out the fire",
+          "I'll check the paperwork later",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Clearly state what type of cargo you're carrying, especially emphasizing if it's NOT hazardous materials, so emergency responders know how to handle the situation safely.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "emergency-situations-q4",
+        type: "audio-based",
+        question:
+          "Listen to this emergency report and identify the key information provided:",
+        audioText:
+          "Officer! There has been a serious accident about one mile back on the highway. One person was not moving, and there was blood. The right lane is completely blocked.",
+        correctAnswer:
+          "Serious accident one mile back, injured person, right lane blocked",
+        explanation:
+          "The driver provides three critical pieces of information: location, injury status, and traffic impact, which helps emergency responders prepare appropriately.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "emergency-situations-q5",
+        type: "true-false",
+        question:
+          "True or False: If you witness an accident but aren't involved, you should just keep driving to avoid getting in trouble.",
+        correctAnswer: "False",
+        explanation:
+          "You have a moral and often legal duty to report accidents you witness. Your report could save lives and help with the investigation.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -1947,6 +2839,78 @@ export const trafficStopCourse: Section[] = [
       "Speak clearly and at a moderate pace",
       "Make eye contact when speaking",
     ],
+    assessments: [
+      {
+        id: "basic-greetings-q1",
+        type: "multiple-choice",
+        question:
+          "What is the appropriate greeting for an officer in the afternoon?",
+        options: [
+          "Good morning, officer",
+          "Good afternoon, officer",
+          "Hey there",
+          "What's up, officer",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "'Good afternoon, officer' is the proper, respectful greeting to use during afternoon hours.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "basic-greetings-q2",
+        type: "fill-in-blank",
+        question:
+          "When asked about your trip purpose, you respond: 'I am _______ cargo to a warehouse in the next city.'",
+        correctAnswer: "delivering",
+        explanation:
+          "'Delivering' means taking goods to their destination, which is the primary purpose of most truck drivers' trips.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "basic-greetings-q3",
+        type: "scenario-response",
+        question:
+          "An officer asks: 'What is the purpose of your trip today?' What's the best response?",
+        options: [
+          "Just driving around",
+          "I am delivering cargo to a warehouse in the next city, officer. I have automotive parts for a factory there.",
+          "Business stuff",
+          "My company told me to drive here",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Provide a clear, specific answer about your cargo and destination. This shows you're organized and have a legitimate business purpose.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
+      {
+        id: "basic-greetings-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's request and identify what they want:",
+        audioText:
+          "Good morning. I'm Officer Johnson. May I see your identification and driver's license please?",
+        correctAnswer:
+          "The officer wants to see identification and driver's license",
+        explanation:
+          "The officer is politely requesting two documents: identification (like a passport) and your driver's license for verification.",
+        difficulty: "beginner",
+        skillTested: "context",
+      },
+      {
+        id: "basic-greetings-q5",
+        type: "true-false",
+        question:
+          "True or False: It's okay to use casual language like 'Hey' or 'What's up' when greeting a police officer.",
+        correctAnswer: "False",
+        explanation:
+          "Always use formal, respectful language with police officers. Use 'Good morning/afternoon/evening, officer' instead of casual greetings.",
+        difficulty: "beginner",
+        skillTested: "practical-application",
+      },
+    ],
   },
   {
     id: "road-signs-traffic-rules",
@@ -2026,6 +2990,76 @@ export const trafficStopCourse: Section[] = [
       "Always come to a complete stop at stop signs",
       "Understand right-of-way rules",
       "Know the difference between yield and stop",
+    ],
+    assessments: [
+      {
+        id: "road-signs-q1",
+        type: "multiple-choice",
+        question: "What does a 'yield' sign mean?",
+        options: [
+          "Come to a complete stop",
+          "Give right of way to other traffic",
+          "Speed up to merge",
+          "Honk your horn",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "A yield sign means you must give the right of way to other traffic and pedestrians, slowing down or stopping if necessary.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "road-signs-q2",
+        type: "fill-in-blank",
+        question:
+          "At a stop sign, you must come to a _______ stop, meaning your wheels are not moving at all.",
+        correctAnswer: "complete",
+        explanation:
+          "A complete stop means the vehicle is completely motionless, not just slowing down or 'rolling' through the intersection.",
+        difficulty: "intermediate",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "road-signs-q3",
+        type: "scenario-response",
+        question:
+          "An officer says you didn't stop completely at a stop sign. You thought you did. What's your best response?",
+        options: [
+          "I definitely stopped completely, you're wrong.",
+          "Everyone does rolling stops, it's normal.",
+          "I'm sorry, officer. I thought I stopped completely. Thank you for explaining this to me. I will be more careful.",
+          "In my country, we don't have to stop completely.",
+        ],
+        correctAnswer: 2,
+        explanation:
+          "Acknowledge the correction respectfully, show willingness to learn, and commit to following the rules properly in the future.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "road-signs-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's explanation and identify the key rule:",
+        audioText:
+          "In the US, you need to come to a complete stop - that means your wheels are not moving at all, even for a few seconds.",
+        correctAnswer: "Complete stop means wheels not moving at all",
+        explanation:
+          "The officer is explaining that a complete stop requires the vehicle to be completely motionless, not just slowing down significantly.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "road-signs-q5",
+        type: "true-false",
+        question:
+          "True or False: A 'rolling stop' where you slow down significantly but don't stop completely is acceptable at stop signs.",
+        correctAnswer: "False",
+        explanation:
+          "Rolling stops are not acceptable. You must come to a complete stop where your wheels are not moving at all.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -2107,6 +3141,76 @@ export const trafficStopCourse: Section[] = [
       "Be patient during inspections",
       "Answer questions directly and honestly",
     ],
+    assessments: [
+      {
+        id: "border-crossing-q1",
+        type: "multiple-choice",
+        question: "What is a 'manifest' in border crossing?",
+        options: [
+          "Your driver's license",
+          "A document listing cargo contents",
+          "Your passport",
+          "A medical certificate",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "A manifest is an official document that lists all the cargo contents, weights, and destinations for customs inspection.",
+        difficulty: "intermediate",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "border-crossing-q2",
+        type: "fill-in-blank",
+        question:
+          "The border officer says: 'Welcome to the United States. Please present your passport, CDL, and cargo _______ for inspection.'",
+        correctAnswer: "manifest",
+        explanation:
+          "Border officers typically request the cargo manifest along with identification documents to verify what goods are being transported.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "border-crossing-q3",
+        type: "scenario-response",
+        question:
+          "A border officer asks to inspect your cargo area. What should you do?",
+        options: [
+          "Tell them it's not necessary since you have paperwork",
+          "Say 'Of course, officer. Here are the keys to the trailer lock. Please be careful - some parts are heavy.'",
+          "Ask why they need to inspect it",
+          "Refuse because it will delay your delivery",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Cooperate fully with border inspections, provide access, and offer helpful information about the cargo for safety.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
+      {
+        id: "border-crossing-q4",
+        type: "audio-based",
+        question:
+          "Listen to this border officer's question and identify what information they want:",
+        audioText:
+          "What type of cargo are you carrying today, and where is it going?",
+        correctAnswer: "Type of cargo and destination",
+        explanation:
+          "The officer wants to know two things: what kind of goods you're transporting and where you're delivering them.",
+        difficulty: "beginner",
+        skillTested: "context",
+      },
+      {
+        id: "border-crossing-q5",
+        type: "true-false",
+        question:
+          "True or False: You should argue with border officers if an inspection will make you late for delivery.",
+        correctAnswer: "False",
+        explanation:
+          "Never argue with border officers about inspections. They are required for security and customs purposes, and delays are part of international transport.",
+        difficulty: "beginner",
+        skillTested: "practical-application",
+      },
+    ],
   },
   {
     id: "vehicle-maintenance",
@@ -2186,6 +3290,76 @@ export const trafficStopCourse: Section[] = [
       "Know basic truck components",
       "Understand maintenance schedules",
       "Be able to explain recent repairs",
+    ],
+    assessments: [
+      {
+        id: "vehicle-maintenance-q1",
+        type: "multiple-choice",
+        question: "What is a transmission?",
+        options: [
+          "A radio communication device",
+          "A system that transfers power from engine to wheels",
+          "A type of brake system",
+          "A navigation system",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "The transmission is the system that transfers power from the engine to the wheels, allowing the vehicle to move at different speeds.",
+        difficulty: "intermediate",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "vehicle-maintenance-q2",
+        type: "fill-in-blank",
+        question:
+          "The officer asks: 'When was your last full _______ check and inspection?'",
+        correctAnswer: "maintenance",
+        explanation:
+          "Maintenance refers to the regular care, servicing, and repair of vehicle components to ensure safe operation.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "vehicle-maintenance-q3",
+        type: "scenario-response",
+        question:
+          "An officer asks about recent maintenance. You had service last week. What's the best way to respond?",
+        options: [
+          "I think it was serviced recently",
+          "I had a complete inspection two weeks ago at our company garage. Here is the paperwork with all the receipts.",
+          "My company takes care of all that",
+          "I don't keep track of maintenance dates",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Provide specific, detailed information with documentation. This shows you're organized and take maintenance seriously.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "vehicle-maintenance-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's question and identify what they want to know:",
+        audioText:
+          "Have you noticed any problems with the truck lately? Any warning lights or unusual sounds?",
+        correctAnswer: "Current problems, warning lights, or unusual sounds",
+        explanation:
+          "The officer is asking about any current mechanical issues that might affect safety, including dashboard warnings or strange noises.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "vehicle-maintenance-q5",
+        type: "true-false",
+        question:
+          "True or False: You should ignore small mechanical problems as long as the truck still runs.",
+        correctAnswer: "False",
+        explanation:
+          "Small problems can become big safety issues. Always report any mechanical problems to your company immediately for proper maintenance.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
   {
@@ -2267,6 +3441,76 @@ export const trafficStopCourse: Section[] = [
       "Be familiar with shipper and consignee information",
       "Keep documents easily accessible",
     ],
+    assessments: [
+      {
+        id: "cargo-documentation-q1",
+        type: "multiple-choice",
+        question: "What is a 'bill of lading'?",
+        options: [
+          "A driver's license for cargo",
+          "A document detailing cargo and shipping terms",
+          "A receipt for fuel purchases",
+          "A maintenance record",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "A bill of lading is an official document that details what cargo is being shipped, shipping terms, and serves as a receipt.",
+        difficulty: "intermediate",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "cargo-documentation-q2",
+        type: "fill-in-blank",
+        question:
+          "The officer asks: 'Who is the original _______ for this load?'",
+        correctAnswer: "shipper",
+        explanation:
+          "The shipper is the person or company that is sending the cargo - the original source of the goods being transported.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "cargo-documentation-q3",
+        type: "scenario-response",
+        question:
+          "An officer asks about hazardous materials in your cargo. You're carrying automotive parts. How do you respond?",
+        options: [
+          "I'm not sure what's hazardous",
+          "No hazardous materials, officer. Just regular automotive parts - brake components, filters, and engine parts. Nothing dangerous.",
+          "You'll have to check the paperwork",
+          "My company handles all that information",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Clearly state that you have no hazardous materials and specify what type of safe cargo you're carrying. This helps the officer assess any safety concerns.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "cargo-documentation-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's request and identify what documents they want:",
+        audioText:
+          "I need to review your shipping documents. Please show me your bill of lading and cargo manifest.",
+        correctAnswer: "Bill of lading and cargo manifest",
+        explanation:
+          "The officer is requesting two key shipping documents: the bill of lading (shipping contract) and cargo manifest (detailed cargo list).",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "cargo-documentation-q5",
+        type: "true-false",
+        question:
+          "True or False: It's okay to transport cargo without knowing exactly what you're carrying.",
+        correctAnswer: "False",
+        explanation:
+          "You must always know what cargo you're transporting for safety, legal, and regulatory reasons. This information is required during inspections.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
+    ],
   },
   {
     id: "weather-road-safety",
@@ -2346,6 +3590,77 @@ export const trafficStopCourse: Section[] = [
       "Understand weather-related vocabulary",
       "Be able to describe road conditions",
       "Know how to ask for weather updates",
+    ],
+    assessments: [
+      {
+        id: "weather-road-safety-q1",
+        type: "multiple-choice",
+        question: "What does 'visibility' mean in driving?",
+        options: [
+          "How fast you can drive",
+          "How far you can see clearly",
+          "How bright your headlights are",
+          "How well your mirrors work",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Visibility refers to how far you can see clearly ahead, which is crucial for safe driving, especially in fog, rain, or snow.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "weather-road-safety-q2",
+        type: "fill-in-blank",
+        question:
+          "In dangerous weather, the officer says: 'Safety comes _______, always.'",
+        correctAnswer: "first",
+        explanation:
+          "'Safety comes first' means that safety is the most important consideration, more important than schedules or delivery deadlines.",
+        difficulty: "beginner",
+        skillTested: "vocabulary",
+      },
+      {
+        id: "weather-road-safety-q3",
+        type: "scenario-response",
+        question:
+          "You're driving in thick fog and can barely see 50 feet ahead. An officer stops you. What should you say?",
+        options: [
+          "I'm fine, I can handle it",
+          "Officer, I'm very worried about this fog. I can barely see ahead. I was thinking I should find a safe place to park and wait for it to clear.",
+          "I have a delivery deadline, I have to keep going",
+          "This fog isn't that bad",
+        ],
+        correctAnswer: 1,
+        explanation:
+          "Acknowledge the dangerous conditions and show that you're making the right safety decision to stop and wait for better conditions.",
+        difficulty: "advanced",
+        skillTested: "practical-application",
+      },
+      {
+        id: "weather-road-safety-q4",
+        type: "audio-based",
+        question:
+          "Listen to this officer's advice and identify the key safety instruction:",
+        audioText:
+          "When you get to the truck stop, park away from the highway and wait until visibility improves to at least a quarter mile before continuing.",
+        correctAnswer:
+          "Park away from highway, wait until visibility improves to quarter mile",
+        explanation:
+          "The officer gives specific safety instructions: park in a safe location away from traffic and wait for visibility to improve significantly.",
+        difficulty: "intermediate",
+        skillTested: "context",
+      },
+      {
+        id: "weather-road-safety-q5",
+        type: "true-false",
+        question:
+          "True or False: Delivery deadlines are more important than driving safely in dangerous weather conditions.",
+        correctAnswer: "False",
+        explanation:
+          "Safety always comes first. Most companies understand weather delays, and it's better to arrive late than to risk an accident.",
+        difficulty: "intermediate",
+        skillTested: "practical-application",
+      },
     ],
   },
 ];
