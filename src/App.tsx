@@ -1,7 +1,11 @@
 import { Suspense, lazy, useEffect } from "react";
 import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./components/home";
-import routes from "tempo-routes";
+// Import tempo-routes conditionally
+const tempoRoutes =
+  import.meta.env.VITE_TEMPO === "true"
+    ? () => import("tempo-routes").then((module) => module.default)
+    : null;
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -74,7 +78,9 @@ function AppContent() {
               <Route path="/tempobook/*" />
             )}
           </Routes>
-          {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
+          {import.meta.env.VITE_TEMPO === "true" &&
+            tempoRoutes &&
+            useRoutes(tempoRoutes)}
           <Toaster />
         </>
       </Suspense>

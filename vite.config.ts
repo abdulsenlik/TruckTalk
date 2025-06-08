@@ -26,6 +26,8 @@ export default defineConfig({
         chunkFileNames: "assets/[name]-[hash].js",
         entryFileNames: "assets/[name]-[hash].js",
       },
+      // Mark tempo-routes as external during production builds
+      external: process.env.VITE_TEMPO !== "true" ? ["tempo-routes"] : [],
     },
   },
   server: {
