@@ -9,6 +9,7 @@ import { AudioPermissionProvider } from "./components/AudioPermissionProvider";
 import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import UpsellModal from "./components/UpsellModal";
 import { useSubscription } from "./contexts/SubscriptionContext";
+import { LanguageProvider } from "./components/LanguageSelector";
 
 // Lazy load pages for better performance
 const ModuleDetailPage = lazy(() => import("./pages/module/[id]"));
@@ -91,11 +92,13 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AudioPermissionProvider>
-        <SubscriptionProvider>
-          <AppContent />
-        </SubscriptionProvider>
-      </AudioPermissionProvider>
+      <LanguageProvider>
+        <AudioPermissionProvider>
+          <SubscriptionProvider>
+            <AppContent />
+          </SubscriptionProvider>
+        </AudioPermissionProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 }
