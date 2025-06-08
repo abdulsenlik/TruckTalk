@@ -96,7 +96,7 @@ class AudioService {
 
     // Configure audio element for iframe compatibility
     audio.preload = "auto";
-    audio.playsInline = true;
+    audio.setAttribute("playsinline", "true");
     audio.crossOrigin = "anonymous";
 
     // Additional attributes for iframe compatibility

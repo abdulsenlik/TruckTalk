@@ -478,11 +478,7 @@ const ModuleDetailPage = () => {
                                   ? "turkish"
                                   : language === "kg"
                                     ? "kyrgyz"
-                                    : language === "zh"
-                                      ? "chinese"
-                                      : language === "es"
-                                        ? "spanish"
-                                        : "russian"
+                                    : "russian"
                               }
                               onComplete={() => {}}
                             />
@@ -537,7 +533,7 @@ const ModuleDetailPage = () => {
                           </div>
                         </div>
                         <span className="text-sm text-gray-500">
-                          {t("modules.questionCount", { current: 1, total: 3 })}
+                          Question 1 of 3
                         </span>
                       </div>
 
@@ -668,10 +664,7 @@ const ModuleDetailPage = () => {
                         />
                         <div className="flex justify-between items-center">
                           <p className="text-sm text-gray-500">
-                            {t("progress.modulesCompletedCount", {
-                              completed: 1,
-                              total: 3,
-                            })}
+                            1/3 modules completed
                           </p>
                           <Badge
                             variant="outline"
@@ -738,11 +731,7 @@ const ModuleDetailPage = () => {
                       ? "turkish"
                       : language === "kg"
                         ? "kyrgyz"
-                        : language === "zh"
-                          ? "chinese"
-                          : language === "es"
-                            ? "spanish"
-                            : "russian"
+                        : "russian"
                   }
                   onComplete={() => setSelectedDialogue(null)}
                 />
@@ -765,9 +754,8 @@ const ModuleDetailPage = () => {
                 <p className="text-gray-600">{moduleData.description}</p>
                 <div className="space-y-2">
                   <span className="text-sm text-gray-500">
-                    {t("progress.overall")}: {moduleData.completedDialogues}{" "}
-                    {t("module.of")} {moduleData.totalDialogues}{" "}
-                    {t("module.totalDialogues")} {t("module.completed")}
+                    Overall Progress: {moduleData.completedDialogues} of{" "}
+                    {moduleData.totalDialogues} dialogues completed
                   </span>
                   <Progress value={completionPercentage} className="h-2" />
                 </div>
@@ -818,13 +806,13 @@ const ModuleDetailPage = () => {
                             <div className="flex items-center space-x-4 pt-2">
                               <div className="flex items-center text-xs text-gray-500">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {dialogue.estimatedTime}{" "}
-                                {t("lesson.estimatedTime")}
+                                {dialogue.estimatedTime} min
                               </div>
                               <div
                                 className={`text-xs px-2 py-1 rounded-full ${getDifficultyColor(dialogue.difficulty)}`}
                               >
-                                {t(`modules.${dialogue.difficulty}`)}
+                                {dialogue.difficulty.charAt(0).toUpperCase() +
+                                  dialogue.difficulty.slice(1)}
                               </div>
                             </div>
                           </div>

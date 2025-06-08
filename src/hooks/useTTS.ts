@@ -25,7 +25,7 @@ export function useTTS() {
       const blob = new Blob([data], { type: "audio/mpeg" });
       const audio = new Audio(URL.createObjectURL(blob));
       audio.preload = "auto";
-      audio.playsInline = true;
+      audio.setAttribute("playsinline", "true");
 
       if (audioRef.current) audioRef.current.pause();
       audioRef.current = audio;

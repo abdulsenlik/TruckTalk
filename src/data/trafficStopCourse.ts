@@ -2926,6 +2926,8 @@ export const trafficStopCourse: Section[] = [
           ru: "знак стоп",
         },
         definition: "red octagonal sign requiring complete stop",
+        pronunciation: "STOP SAHYN",
+        example: "You must come to a complete stop at the stop sign.",
       },
       {
         word: "yield",
@@ -2935,6 +2937,8 @@ export const trafficStopCourse: Section[] = [
           ru: "уступить дорогу",
         },
         definition: "give right of way to other traffic",
+        pronunciation: "YEELD",
+        example: "You must yield to oncoming traffic.",
       },
       {
         word: "merge",
@@ -2944,6 +2948,8 @@ export const trafficStopCourse: Section[] = [
           ru: "слияние",
         },
         definition: "join traffic from another lane",
+        pronunciation: "MURJ",
+        example: "Merge carefully into the highway traffic.",
       },
     ],
     dialogues: [
@@ -3076,6 +3082,8 @@ export const trafficStopCourse: Section[] = [
           ru: "таможня",
         },
         definition: "government agency controlling imports and exports",
+        pronunciation: "KUHS-tuhmz",
+        example: "I need to go through customs at the border.",
       },
       {
         word: "manifest",
@@ -3085,6 +3093,8 @@ export const trafficStopCourse: Section[] = [
           ru: "манифест",
         },
         definition: "document listing cargo contents",
+        pronunciation: "MAN-uh-fest",
+        example: "Here is my cargo manifest for inspection.",
       },
       {
         word: "declaration",
@@ -3094,6 +3104,8 @@ export const trafficStopCourse: Section[] = [
           ru: "декларация",
         },
         definition: "official statement of goods being transported",
+        pronunciation: "dek-luh-RAY-shuhn",
+        example: "I have completed the customs declaration form.",
       },
     ],
     dialogues: [
@@ -3226,6 +3238,8 @@ export const trafficStopCourse: Section[] = [
           ru: "трансмиссия",
         },
         definition: "system that transfers power from engine to wheels",
+        pronunciation: "trans-MISH-uhn",
+        example: "The transmission needs to be checked during maintenance.",
       },
       {
         word: "alternator",
@@ -3235,6 +3249,8 @@ export const trafficStopCourse: Section[] = [
           ru: "генератор",
         },
         definition: "device that generates electrical power",
+        pronunciation: "AWL-ter-nay-ter",
+        example: "The alternator charges the truck's battery.",
       },
       {
         word: "maintenance",
@@ -3244,6 +3260,8 @@ export const trafficStopCourse: Section[] = [
           ru: "техническое обслуживание",
         },
         definition: "regular care and repair of equipment",
+        pronunciation: "MAYN-tuh-nuhns",
+        example: "Regular maintenance keeps the truck running safely.",
       },
     ],
     dialogues: [
@@ -3376,6 +3394,8 @@ export const trafficStopCourse: Section[] = [
           ru: "коносамент",
         },
         definition: "document detailing cargo and shipping terms",
+        pronunciation: "BIL uhv LAY-ding",
+        example: "The bill of lading shows what cargo I'm carrying.",
       },
       {
         word: "freight",
@@ -3385,6 +3405,8 @@ export const trafficStopCourse: Section[] = [
           ru: "груз",
         },
         definition: "goods transported by truck, ship, or plane",
+        pronunciation: "FRAYT",
+        example: "I transport freight across the country.",
       },
       {
         word: "shipper",
@@ -3394,6 +3416,8 @@ export const trafficStopCourse: Section[] = [
           ru: "грузоотправитель",
         },
         definition: "person or company sending the cargo",
+        pronunciation: "SHIP-er",
+        example: "The shipper loaded the cargo yesterday.",
       },
     ],
     dialogues: [
@@ -3526,6 +3550,8 @@ export const trafficStopCourse: Section[] = [
           ru: "видимость",
         },
         definition: "how far you can see clearly",
+        pronunciation: "viz-uh-BIL-i-tee",
+        example: "The fog reduced visibility to 50 feet.",
       },
       {
         word: "ice",
@@ -3535,6 +3561,8 @@ export const trafficStopCourse: Section[] = [
           ru: "лед",
         },
         definition: "frozen water on road surface",
+        pronunciation: "AYS",
+        example: "Be careful driving on ice.",
       },
       {
         word: "fog",
@@ -3544,6 +3572,8 @@ export const trafficStopCourse: Section[] = [
           ru: "туман",
         },
         definition: "thick cloud near the ground",
+        pronunciation: "FAWG",
+        example: "The thick fog made driving dangerous.",
       },
     ],
     dialogues: [

@@ -11,8 +11,8 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    // Only include tempo plugin in development
-    ...(process.env.NODE_ENV === "development" ? [tempo()] : []),
+    // Only include tempo plugin when VITE_TEMPO is true
+    ...(process.env.VITE_TEMPO === "true" ? [tempo()] : []),
   ],
   resolve: {
     preserveSymlinks: true,
@@ -24,6 +24,7 @@ export default defineConfig({
     outDir: "dist",
     sourcemap: false,
     rollupOptions: {
+      external: process.env.VITE_TEMPO === "true" ? [] : ["tempo-routes"],
       output: {
         manualChunks: {
           vendor: ["react", "react-dom", "react-router-dom"],

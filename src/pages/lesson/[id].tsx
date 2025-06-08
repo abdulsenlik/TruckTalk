@@ -368,11 +368,7 @@ const LessonDetailPage = () => {
                         ? "turkish"
                         : language === "kg"
                           ? "kyrgyz"
-                          : language === "zh"
-                            ? "chinese"
-                            : language === "es"
-                              ? "spanish"
-                              : "russian"
+                          : "russian"
                     }
                     onComplete={() => {}}
                   />
