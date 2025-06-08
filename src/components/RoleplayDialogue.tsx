@@ -78,6 +78,11 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
   const [recognition, setRecognition] = useState<any>(null);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(
+    null,
+  );
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [apiError, setApiError] = useState<string | null>(null);
   const conversationEndRef = useRef<HTMLDivElement>(null);
 
   // Initialize Web Speech API for speech recognition
@@ -120,7 +125,7 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
         if (finalTranscript) {
           console.log("[RoleplayDialogue] Final transcript:", finalTranscript);
           setUserInput(finalTranscript.trim());
-          setIsRecording(false);
+          // Don't set recording to false here - let the media recorder handle it
         } else if (interimTranscript) {
           console.log(
             "[RoleplayDialogue] Interim transcript:",
@@ -159,7 +164,7 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
 
       recognitionInstance.onend = () => {
         console.log("[RoleplayDialogue] Speech recognition ended");
-        setIsRecording(false);
+        // Don't set recording to false here - let the media recorder handle it
       };
 
       setRecognition(recognitionInstance);
@@ -210,48 +215,141 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
     }
   };
 
+  const sendAudioToAPI = async (audioBlob: Blob, transcript: string) => {
+    console.log("[RoleplayDialogue] Sending audio to API...");
+    setIsProcessing(true);
+    setApiError(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("audio", audioBlob, "recording.webm");
+      formData.append("transcript", transcript);
+      formData.append(
+        "context",
+        JSON.stringify({
+          currentExchangeIndex,
+          conversationHistory: conversation,
+        }),
+      );
+
+      const response = await fetch("/api/roleplay-response", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText}`,
+        );
+      }
+
+      const data = await response.json();
+      console.log("[RoleplayDialogue] API response:", data);
+
+      if (!data.replyText || !data.ttsAudioUrl) {
+        throw new Error("Invalid API response format");
+      }
+
+      // Add user's response to conversation
+      const userExchange: DialogueExchange = {
+        speaker: "Driver",
+        text: transcript,
+      };
+
+      // Add officer's response to conversation
+      const officerExchange: DialogueExchange = {
+        speaker: "Officer",
+        text: data.replyText,
+      };
+
+      setConversation((prev) => [...prev, userExchange, officerExchange]);
+      setCurrentExchangeIndex(currentExchangeIndex + 1);
+
+      // Play the officer's audio response
+      try {
+        const audio = new Audio(data.ttsAudioUrl);
+        audio.preload = "auto";
+        audio.setAttribute("playsinline", "true");
+        await audio.play();
+        console.log("[RoleplayDialogue] Officer audio played successfully");
+      } catch (audioError) {
+        console.error(
+          "[RoleplayDialogue] Error playing officer audio:",
+          audioError,
+        );
+        // Fallback to text-to-speech if direct audio fails
+        try {
+          await audioService.playText(
+            data.replyText,
+            `officer-api-${Date.now()}`,
+          );
+        } catch (ttsError) {
+          console.error(
+            "[RoleplayDialogue] TTS fallback also failed:",
+            ttsError,
+          );
+        }
+      }
+    } catch (error) {
+      console.error("[RoleplayDialogue] API request failed:", error);
+      setApiError(
+        error instanceof Error ? error.message : "Unknown error occurred",
+      );
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   const handleUserInput = async () => {
     if (!userInput.trim()) return;
 
     console.log("[RoleplayDialogue] Processing user input:", userInput);
 
-    // Add user's response to conversation
-    const userExchange: DialogueExchange = {
-      speaker: "Driver",
-      text: userInput,
-    };
-    setConversation((prev) => [...prev, userExchange]);
-    setUserInput("");
-    setIsProcessing(true);
+    // If we have recorded audio, send it to the API
+    if (audioChunks.length > 0) {
+      const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
+      await sendAudioToAPI(audioBlob, userInput);
+      setAudioChunks([]); // Clear audio chunks after sending
+    } else {
+      // Fallback to original behavior for text-only input
+      const userExchange: DialogueExchange = {
+        speaker: "Driver",
+        text: userInput,
+      };
+      setConversation((prev) => [...prev, userExchange]);
+      setIsProcessing(true);
 
-    // Get the next officer line if available
-    setTimeout(async () => {
-      if (
-        currentExchangeIndex < exchanges.length &&
-        exchanges[currentExchangeIndex].speaker === "Officer"
-      ) {
-        const nextOfficerExchange = exchanges[currentExchangeIndex];
-        setConversation((prev) => [...prev, nextOfficerExchange]);
+      // Get the next officer line if available
+      setTimeout(async () => {
+        if (
+          currentExchangeIndex < exchanges.length &&
+          exchanges[currentExchangeIndex].speaker === "Officer"
+        ) {
+          const nextOfficerExchange = exchanges[currentExchangeIndex];
+          setConversation((prev) => [...prev, nextOfficerExchange]);
 
-        try {
-          await playOfficerLine(nextOfficerExchange.text);
-        } catch (error) {
-          console.error(
-            "[RoleplayDialogue] Error playing officer line:",
-            error,
-          );
+          try {
+            await playOfficerLine(nextOfficerExchange.text);
+          } catch (error) {
+            console.error(
+              "[RoleplayDialogue] Error playing officer line:",
+              error,
+            );
+          }
+
+          setCurrentExchangeIndex(currentExchangeIndex + 1);
+        } else if (currentExchangeIndex >= exchanges.length - 1) {
+          // End of roleplay
+          setIsProcessing(false);
+        } else {
+          // Skip driver lines in the script since user is providing those
+          setCurrentExchangeIndex(currentExchangeIndex + 2); // Skip to next officer line
+          setIsProcessing(false);
         }
+      }, 1000);
+    }
 
-        setCurrentExchangeIndex(currentExchangeIndex + 1);
-      } else if (currentExchangeIndex >= exchanges.length - 1) {
-        // End of roleplay
-        setIsProcessing(false);
-      } else {
-        // Skip driver lines in the script since user is providing those
-        setCurrentExchangeIndex(currentExchangeIndex + 2); // Skip to next officer line
-        setIsProcessing(false);
-      }
-    }, 1000);
+    setUserInput("");
   };
 
   const handleSuggestionClick = (suggestion: string) => {
@@ -272,8 +370,11 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
       console.log("[RoleplayDialogue] Stopping recording");
       try {
         recognition.stop();
+        if (mediaRecorder && mediaRecorder.state === "recording") {
+          mediaRecorder.stop();
+        }
       } catch (error) {
-        console.error("[RoleplayDialogue] Error stopping recognition:", error);
+        console.error("[RoleplayDialogue] Error stopping recording:", error);
       }
       setIsRecording(false);
     } else {
@@ -306,7 +407,7 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
           }
         }
 
-        // Request microphone access to ensure permission
+        // Request microphone access and set up media recorder
         let stream: MediaStream | null = null;
         try {
           stream = await navigator.mediaDevices.getUserMedia({
@@ -319,11 +420,45 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
           });
           console.log("[RoleplayDialogue] Microphone access granted");
 
-          // Stop the stream immediately as we only needed it for permission
-          stream.getTracks().forEach((track) => {
-            track.stop();
-            console.log("[RoleplayDialogue] Audio track stopped:", track.label);
+          // Set up MediaRecorder for audio capture
+          const recorder = new MediaRecorder(stream, {
+            mimeType: "audio/webm;codecs=opus",
           });
+
+          const chunks: Blob[] = [];
+
+          recorder.ondataavailable = (event) => {
+            if (event.data.size > 0) {
+              chunks.push(event.data);
+              console.log(
+                "[RoleplayDialogue] Audio chunk recorded:",
+                event.data.size,
+                "bytes",
+              );
+            }
+          };
+
+          recorder.onstop = () => {
+            console.log(
+              "[RoleplayDialogue] MediaRecorder stopped, total chunks:",
+              chunks.length,
+            );
+            setAudioChunks(chunks);
+            // Stop the stream after recording
+            stream?.getTracks().forEach((track) => {
+              track.stop();
+              console.log(
+                "[RoleplayDialogue] Audio track stopped:",
+                track.label,
+              );
+            });
+          };
+
+          setMediaRecorder(recorder);
+
+          // Start recording
+          recorder.start(1000); // Collect data every second
+          console.log("[RoleplayDialogue] MediaRecorder started");
         } catch (mediaError) {
           console.error("[RoleplayDialogue] Media access error:", mediaError);
 
@@ -531,7 +666,20 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
                   <div className="flex items-center gap-2">
                     <Loader2 className="h-4 w-4 animate-spin text-slate-500" />
                     <span className="text-sm text-slate-500">
-                      Officer is responding...
+                      {audioChunks.length > 0
+                        ? "Processing your response..."
+                        : "Officer is responding..."}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
+            {apiError && (
+              <div className="flex justify-center mb-4">
+                <div className="bg-red-50 border border-red-200 p-3 rounded-lg max-w-md">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-red-700">
+                      ⚠️ Error: {apiError}
                     </span>
                   </div>
                 </div>
