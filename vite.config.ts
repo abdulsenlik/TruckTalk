@@ -6,16 +6,12 @@ import { tempo } from "tempo-devtools/dist/vite";
 // https://vitejs.dev/config/
 export default defineConfig({
   base: "/",
-  optimizeDeps: {
-    entries: ["src/main.tsx"],
-  },
   plugins: [
     react(),
     // Only include tempo plugin when VITE_TEMPO is true
     ...(process.env.VITE_TEMPO === "true" ? [tempo()] : []),
   ],
   resolve: {
-    preserveSymlinks: true,
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
@@ -23,24 +19,16 @@ export default defineConfig({
   build: {
     outDir: "dist",
     sourcemap: false,
+    assetsDir: "assets",
     rollupOptions: {
-      external: process.env.VITE_TEMPO === "true" ? [] : ["tempo-routes"],
       output: {
-        manualChunks: {
-          vendor: ["react", "react-dom", "react-router-dom"],
-          ui: [
-            "@radix-ui/react-dialog",
-            "@radix-ui/react-dropdown-menu",
-            "@radix-ui/react-tabs",
-          ],
-          supabase: ["@supabase/supabase-js"],
-        },
+        assetFileNames: "assets/[name]-[hash][extname]",
+        chunkFileNames: "assets/[name]-[hash].js",
+        entryFileNames: "assets/[name]-[hash].js",
       },
     },
-    chunkSizeWarningLimit: 1000,
   },
   server: {
-    // @ts-ignore
-    allowedHosts: true,
+    host: true,
   },
 });
