@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Globe, Menu, X, ChevronRight, CheckCircle2, Star } from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
+import StaticAudioTest from "./StaticAudioTest";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "./ui/button";
 import {
@@ -371,6 +372,8 @@ const Home = () => {
                 </Card>
               );
             })}
+            {/*–– DEBUG: static audio tester ––*/}
+            <StaticAudioTest />
           </div>
         </section>
       </main>

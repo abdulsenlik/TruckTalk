@@ -92,20 +92,41 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
       recognitionInstance.continuous = false;
       recognitionInstance.interimResults = true;
       recognitionInstance.lang = "en-US";
+      recognitionInstance.maxAlternatives = 1;
 
       recognitionInstance.onstart = () => {
         console.log("[RoleplayDialogue] Speech recognition started");
+        setIsRecording(true);
       };
 
       recognitionInstance.onresult = (event) => {
-        const transcript = event.results[0][0].transcript;
-        console.log("[RoleplayDialogue] Speech recognized:", transcript);
-        setUserInput(transcript);
+        console.log(
+          "[RoleplayDialogue] Speech recognition results:",
+          event.results,
+        );
 
-        // If we have a final result, stop recording
-        if (event.results[0].isFinal) {
-          console.log("[RoleplayDialogue] Final result received");
+        let finalTranscript = "";
+        let interimTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const transcript = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcript;
+          } else {
+            interimTranscript += transcript;
+          }
+        }
+
+        if (finalTranscript) {
+          console.log("[RoleplayDialogue] Final transcript:", finalTranscript);
+          setUserInput(finalTranscript.trim());
           setIsRecording(false);
+        } else if (interimTranscript) {
+          console.log(
+            "[RoleplayDialogue] Interim transcript:",
+            interimTranscript,
+          );
+          setUserInput(interimTranscript.trim());
         }
       };
 
@@ -113,8 +134,27 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
         console.error(
           "[RoleplayDialogue] Speech recognition error:",
           event.error,
+          "Additional info:",
+          event,
         );
         setIsRecording(false);
+
+        // Provide user-friendly error messages
+        if (event.error === "not-allowed") {
+          alert(
+            "Microphone access denied. Please allow microphone permissions and try again.",
+          );
+        } else if (event.error === "no-speech") {
+          console.log(
+            "[RoleplayDialogue] No speech detected, please try again",
+          );
+        } else if (event.error === "audio-capture") {
+          alert(
+            "No microphone found. Please ensure a microphone is connected.",
+          );
+        } else if (event.error === "network") {
+          alert("Network error occurred during speech recognition.");
+        }
       };
 
       recognitionInstance.onend = () => {
@@ -219,43 +259,155 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
     setShowSuggestions(false);
   };
 
-  const toggleRecording = () => {
+  const toggleRecording = async () => {
     if (!recognition) {
       console.warn("[RoleplayDialogue] Speech recognition not available");
+      alert(
+        "Speech recognition is not supported in this browser. Please use Chrome, Edge, or Safari.",
+      );
       return;
     }
 
     if (isRecording) {
       console.log("[RoleplayDialogue] Stopping recording");
-      recognition.stop();
+      try {
+        recognition.stop();
+      } catch (error) {
+        console.error("[RoleplayDialogue] Error stopping recognition:", error);
+      }
+      setIsRecording(false);
     } else {
       console.log("[RoleplayDialogue] Starting recording");
       setShowSuggestions(false);
 
-      // Request microphone permission
-      navigator.mediaDevices
-        .getUserMedia({ audio: true })
-        .then(() => {
-          // Permission granted, start recognition
+      try {
+        // Check if permissions API is available
+        if ("permissions" in navigator) {
           try {
-            recognition.start();
-            setIsRecording(true);
-          } catch (error) {
-            console.error(
-              "[RoleplayDialogue] Error starting recognition:",
-              error,
+            const permissionStatus = await navigator.permissions.query({
+              name: "microphone" as PermissionName,
+            });
+            console.log(
+              "[RoleplayDialogue] Microphone permission status:",
+              permissionStatus.state,
+            );
+
+            if (permissionStatus.state === "denied") {
+              alert(
+                "Microphone access is denied. Please enable microphone permissions in your browser settings and refresh the page.",
+              );
+              return;
+            }
+          } catch (permError) {
+            console.log(
+              "[RoleplayDialogue] Permission query not supported:",
+              permError,
             );
           }
-        })
-        .catch((error) => {
+        }
+
+        // Request microphone access to ensure permission
+        let stream: MediaStream | null = null;
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            audio: {
+              echoCancellation: true,
+              noiseSuppression: true,
+              autoGainControl: true,
+              sampleRate: 16000,
+            },
+          });
+          console.log("[RoleplayDialogue] Microphone access granted");
+
+          // Stop the stream immediately as we only needed it for permission
+          stream.getTracks().forEach((track) => {
+            track.stop();
+            console.log("[RoleplayDialogue] Audio track stopped:", track.label);
+          });
+        } catch (mediaError) {
+          console.error("[RoleplayDialogue] Media access error:", mediaError);
+
+          if (mediaError instanceof Error) {
+            if (mediaError.name === "NotAllowedError") {
+              alert(
+                "Microphone access denied. Please allow microphone access in your browser and try again.",
+              );
+            } else if (mediaError.name === "NotFoundError") {
+              alert(
+                "No microphone found. Please ensure a microphone is connected and try again.",
+              );
+            } else if (mediaError.name === "NotReadableError") {
+              alert(
+                "Microphone is already in use by another application. Please close other applications using the microphone and try again.",
+              );
+            } else {
+              alert(`Microphone error: ${mediaError.message}`);
+            }
+          }
+          return;
+        }
+
+        // Start speech recognition after successful media access
+        try {
+          // Ensure recognition is not already running
+          if (recognition.state && recognition.state !== "inactive") {
+            console.log(
+              "[RoleplayDialogue] Recognition already active, stopping first",
+            );
+            recognition.stop();
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+
+          recognition.start();
+          console.log(
+            "[RoleplayDialogue] Speech recognition started successfully",
+          );
+        } catch (recognitionError) {
           console.error(
-            "[RoleplayDialogue] Microphone permission denied:",
-            error,
+            "[RoleplayDialogue] Error starting recognition:",
+            recognitionError,
           );
-          alert(
-            "Microphone access is required for speech recognition. Please allow microphone access.",
-          );
-        });
+          setIsRecording(false);
+
+          if (
+            recognitionError instanceof Error &&
+            recognitionError.message.includes("already started")
+          ) {
+            console.log(
+              "[RoleplayDialogue] Recognition already running, attempting restart",
+            );
+            try {
+              recognition.stop();
+              setTimeout(() => {
+                try {
+                  recognition.start();
+                  console.log(
+                    "[RoleplayDialogue] Recognition restarted successfully",
+                  );
+                } catch (retryError) {
+                  console.error("[RoleplayDialogue] Retry failed:", retryError);
+                  alert(
+                    "Failed to start speech recognition. Please try again.",
+                  );
+                }
+              }, 200);
+            } catch (stopError) {
+              console.error(
+                "[RoleplayDialogue] Error stopping recognition:",
+                stopError,
+              );
+            }
+          } else {
+            alert(
+              `Speech recognition error: ${recognitionError instanceof Error ? recognitionError.message : "Unknown error"}`,
+            );
+          }
+        }
+      } catch (error) {
+        console.error("[RoleplayDialogue] Unexpected error:", error);
+        setIsRecording(false);
+        alert("An unexpected error occurred. Please try again.");
+      }
     }
   };
 

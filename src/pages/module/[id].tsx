@@ -203,11 +203,16 @@ const ModuleDetailPage = () => {
   };
 
   const playVocabularyAudio = async (word: string) => {
-    const identifier = `vocab-${word}`;
+    const identifier = `vocab-${word.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
     setTtsPlayLoading((prev) => ({ ...prev, [identifier]: true }));
 
     try {
-      console.log("[Module] Playing vocabulary audio for word:", word);
+      console.log(
+        "[Module] Playing vocabulary audio for word:",
+        word,
+        "with identifier:",
+        identifier,
+      );
       await audioService.playText(word, identifier);
       console.log("[Module] Audio played successfully");
     } catch (err) {
@@ -218,13 +223,18 @@ const ModuleDetailPage = () => {
   };
 
   const playLineAudio = async (text: string) => {
-    const identifier = `line-${text.substring(0, 10).replace(/\s+/g, "-")}`;
+    const identifier = `line-${text
+      .substring(0, 10)
+      .replace(/[^a-z0-9]/g, "-")
+      .toLowerCase()}`;
     setTtsPlayLoading((prev) => ({ ...prev, [identifier]: true }));
 
     try {
       console.log(
         "[Module] Playing line audio:",
         text.substring(0, 30) + "...",
+        "with identifier:",
+        identifier,
       );
       await audioService.playText(text, identifier);
       console.log("[Module] Audio played successfully");
@@ -307,11 +317,15 @@ const ModuleDetailPage = () => {
                                       playVocabularyAudio(item.word)
                                     }
                                     disabled={
-                                      ttsPlayLoading[`vocab-${item.word}`]
+                                      ttsPlayLoading[
+                                        `vocab-${item.word.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
+                                      ]
                                     }
                                     className="relative overflow-hidden group"
                                   >
-                                    {ttsPlayLoading[`vocab-${item.word}`] ? (
+                                    {ttsPlayLoading[
+                                      `vocab-${item.word.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
+                                    ] ? (
                                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                                     ) : (
                                       <>
@@ -854,11 +868,15 @@ const ModuleDetailPage = () => {
                                         playVocabularyAudio(item.word)
                                       }
                                       disabled={
-                                        ttsPlayLoading[`vocab-${item.word}`]
+                                        ttsPlayLoading[
+                                          `vocab-${item.word.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
+                                        ]
                                       }
                                       className="relative overflow-hidden group"
                                     >
-                                      {ttsPlayLoading[`vocab-${item.word}`] ? (
+                                      {ttsPlayLoading[
+                                        `vocab-${item.word.toLowerCase().replace(/[^a-z0-9]/g, "-")}`
+                                      ] ? (
                                         <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent"></span>
                                       ) : (
                                         <>

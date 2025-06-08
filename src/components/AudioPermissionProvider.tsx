@@ -113,6 +113,18 @@ export const AudioPermissionProvider: React.FC<
 
     const success = await initializeAudioContext();
 
+    // Store the provider globally for audioService to use
+    (window as any).__audioPermissionProvider = {
+      requestPermission: async () => {
+        if (hasPermission && isInitialized) {
+          return true;
+        }
+        return await initializeAudioContext();
+      },
+      hasPermission: success,
+      isInitialized: success,
+    };
+
     // Resolve the promise if it exists
     if ((window as any).__audioPermissionResolve) {
       (window as any).__audioPermissionResolve(success);
@@ -145,6 +157,13 @@ export const AudioPermissionProvider: React.FC<
           setIsInitialized(true);
           setAudioContext(testCtx);
           console.log("[AudioPermission] Audio already permitted");
+
+          // Store the provider globally
+          (window as any).__audioPermissionProvider = {
+            requestPermission: async () => true,
+            hasPermission: true,
+            isInitialized: true,
+          };
         } else {
           testCtx.close();
         }
@@ -160,6 +179,8 @@ export const AudioPermissionProvider: React.FC<
       if (audioContext) {
         audioContext.close();
       }
+      // Clean up global reference
+      delete (window as any).__audioPermissionProvider;
     };
   }, []);
 

@@ -43,6 +43,9 @@ export const AudioButton: React.FC<AudioButtonProps> = ({
 
     try {
       console.log(`[AudioButton] Requesting permission and playing: "${text}"`);
+      console.log(
+        `[AudioButton] Using identifier: ${identifier || `audio-${Date.now()}`}`,
+      );
 
       // Request permission first
       const hasPermission = await requestPermission();
@@ -56,16 +59,21 @@ export const AudioButton: React.FC<AudioButtonProps> = ({
         return;
       }
 
-      // Play the audio
-      await audioService.playText(text, identifier || `audio-${Date.now()}`);
+      // Play the audio with a unique identifier
+      const audioId =
+        identifier ||
+        `audio-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      console.log(`[AudioButton] Playing with ID: ${audioId}`);
+
+      await audioService.playText(text, audioId);
       console.log(`[AudioButton] Successfully played: "${text}"`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(`[AudioButton] Error playing audio:`, error);
       setHasError(true);
 
       toast({
         title: "Audio Error",
-        description: "Failed to play audio. Please try again.",
+        description: error.message || "Failed to play audio. Please try again.",
         variant: "destructive",
       });
     } finally {

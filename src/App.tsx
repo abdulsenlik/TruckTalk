@@ -1,11 +1,6 @@
-import { Suspense, lazy, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
 import Home from "./components/home";
-// Import tempo-routes conditionally
-const tempoRoutes =
-  import.meta.env.VITE_TEMPO === "true"
-    ? () => import("tempo-routes").then((module) => module.default)
-    : null;
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
 import ErrorBoundary from "./components/ErrorBoundary";
@@ -14,6 +9,61 @@ import { SubscriptionProvider } from "./contexts/SubscriptionContext";
 import UpsellModal from "./components/UpsellModal";
 import { useSubscription } from "./contexts/SubscriptionContext";
 import { LanguageProvider } from "./components/LanguageSelector";
+
+// Tempo routes component to handle conditional routing
+function TempoRoutes() {
+  const [routes, setRoutes] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
+
+  useEffect(() => {
+    // Only attempt to load tempo-routes if VITE_TEMPO is explicitly true
+    if (import.meta.env.VITE_TEMPO === "true") {
+      setIsLoading(true);
+
+      // Use a timeout to prevent hanging the startup
+      const timeoutId = setTimeout(() => {
+        console.warn(
+          "[App] Tempo routes loading timeout - continuing without tempo routes",
+        );
+        setHasError(true);
+        setIsLoading(false);
+      }, 5000); // 5 second timeout
+
+      import("tempo-routes")
+        .then((module) => {
+          clearTimeout(timeoutId);
+          console.log("[App] Tempo routes loaded successfully");
+          if (module.default && Array.isArray(module.default)) {
+            setRoutes(module.default);
+          } else {
+            console.warn("[App] Invalid tempo routes format");
+            setHasError(true);
+          }
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          clearTimeout(timeoutId);
+          console.warn("[App] Failed to load tempo-routes:", error);
+          setHasError(true);
+          setIsLoading(false);
+        });
+    }
+  }, []);
+
+  // Don't render anything while loading or if there's an error
+  if (isLoading || hasError || !routes) {
+    return null;
+  }
+
+  // Use the routes hook only when we have valid routes
+  try {
+    return useRoutes(routes);
+  } catch (error) {
+    console.error("[App] Error rendering tempo routes:", error);
+    return null;
+  }
+}
 
 // Lazy load pages for better performance
 const ModuleDetailPage = lazy(() => import("./pages/module/[id]"));
@@ -78,9 +128,8 @@ function AppContent() {
               <Route path="/tempobook/*" />
             )}
           </Routes>
-          {import.meta.env.VITE_TEMPO === "true" &&
-            tempoRoutes &&
-            useRoutes(tempoRoutes)}
+          {/* Tempo routes component handles conditional routing */}
+          <TempoRoutes />
           <Toaster />
         </>
       </Suspense>
