@@ -1,9 +1,0 @@
-import ProgressPage from "@/pages/progress";
-
-export default function ProgressPageStoryboard() {
-  return (
-    <div className="bg-white">
-      <ProgressPage />
-    </div>
-  );
-}
