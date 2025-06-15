@@ -202,8 +202,13 @@ class AudioService {
     const normalizedIdentifier = identifier
       .toLowerCase()
       .replace(/[^a-z0-9-]/g, "-");
-    console.log(`[AudioService] Playing: "${text}" (${normalizedIdentifier})`);
-    console.log(`[AudioService] In iframe: ${this.isInIframe()}`);
+    console.log(
+      `[AudioService] 🎵 Playing: "${text}" (${normalizedIdentifier})`,
+    );
+    console.log(`[AudioService] 🖼️ In iframe: ${this.isInIframe()}`);
+    console.log(
+      `[AudioService] 🔊 Audio context state: ${this.webAudioContext?.state || "not initialized"}`,
+    );
 
     try {
       // Request audio permission first
@@ -258,18 +263,18 @@ class AudioService {
 
       if (playPromise !== undefined) {
         await playPromise;
-        console.log("[AudioService] Playback started successfully");
+        console.log("[AudioService] ✅ Playback started successfully");
 
         // Additional verification that audio is actually playing
         setTimeout(() => {
           if (!audio.paused && audio.currentTime > 0) {
             console.log(
-              "[AudioService] Audio confirmed playing at time:",
+              "[AudioService] ✅ Audio confirmed playing at time:",
               audio.currentTime,
             );
           } else {
             console.warn(
-              "[AudioService] Audio appears to be paused despite play() success",
+              "[AudioService] ⚠️ Audio appears to be paused despite play() success",
               { paused: audio.paused, currentTime: audio.currentTime },
             );
           }

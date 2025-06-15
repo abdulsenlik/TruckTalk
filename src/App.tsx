@@ -75,6 +75,8 @@ const ProgressPage = lazy(() => import("./pages/progress"));
 const AuthPage = lazy(() => import("./pages/auth"));
 const PricingPage = lazy(() => import("./pages/pricing"));
 const LandingPage = lazy(() => import("./pages/landing"));
+const BootcampPage = lazy(() => import("./pages/bootcamp"));
+const BootcampModulePage = lazy(() => import("./pages/bootcamp/module/[id]"));
 
 // Inner App component that uses subscription context
 function AppContent() {
@@ -123,6 +125,11 @@ function AppContent() {
             <Route path="/pricing" element={<PricingPage />} />
             <Route path="/success" element={<SuccessPage />} />
             <Route path="/auth" element={<AuthPage />} />
+            <Route path="/bootcamp" element={<BootcampPage />} />
+            <Route
+              path="/bootcamp/module/:id"
+              element={<BootcampModulePage />}
+            />
             {/* Add tempobook route to prevent catchall from capturing it */}
             {import.meta.env.VITE_TEMPO === "true" && (
               <Route path="/tempobook/*" />

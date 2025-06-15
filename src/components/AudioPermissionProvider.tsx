@@ -19,6 +19,8 @@ interface AudioPermissionContextType {
   hasPermission: boolean;
   requestPermission: () => Promise<boolean>;
   isInitialized: boolean;
+  hasMicrophonePermission: boolean;
+  requestMicrophonePermission: () => Promise<boolean>;
 }
 
 const AudioPermissionContext = createContext<AudioPermissionContextType | null>(
@@ -46,6 +48,10 @@ export const AudioPermissionProvider: React.FC<
   const [isInitialized, setIsInitialized] = useState(false);
   const [showPermissionDialog, setShowPermissionDialog] = useState(false);
   const [audioContext, setAudioContext] = useState<AudioContext | null>(null);
+  const [hasMicrophonePermission, setHasMicrophonePermission] = useState(false);
+  const [microphoneStream, setMicrophoneStream] = useState<MediaStream | null>(
+    null,
+  );
 
   // Check if we're in an iframe
   const isInIframe = () => {
@@ -86,6 +92,39 @@ export const AudioPermissionProvider: React.FC<
     }
   };
 
+  // Request microphone permission
+  const requestMicrophonePermission = async (): Promise<boolean> => {
+    console.log("[AudioPermission] Requesting microphone permission...");
+
+    if (hasMicrophonePermission && microphoneStream) {
+      return true;
+    }
+
+    try {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("[AudioPermission] getUserMedia not supported");
+        return false;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      console.log("[AudioPermission] Microphone permission granted");
+      setMicrophoneStream(stream);
+      setHasMicrophonePermission(true);
+      return true;
+    } catch (error) {
+      console.error("[AudioPermission] Microphone permission denied:", error);
+      setHasMicrophonePermission(false);
+      return false;
+    }
+  };
+
   // Request audio permission with user interaction
   const requestPermission = async (): Promise<boolean> => {
     console.log("[AudioPermission] Requesting audio permission...");
@@ -121,8 +160,10 @@ export const AudioPermissionProvider: React.FC<
         }
         return await initializeAudioContext();
       },
+      requestMicrophonePermission,
       hasPermission: success,
       isInitialized: success,
+      hasMicrophonePermission,
     };
 
     // Resolve the promise if it exists
@@ -161,8 +202,10 @@ export const AudioPermissionProvider: React.FC<
           // Store the provider globally
           (window as any).__audioPermissionProvider = {
             requestPermission: async () => true,
+            requestMicrophonePermission,
             hasPermission: true,
             isInitialized: true,
+            hasMicrophonePermission,
           };
         } else {
           testCtx.close();
@@ -179,6 +222,9 @@ export const AudioPermissionProvider: React.FC<
       if (audioContext) {
         audioContext.close();
       }
+      if (microphoneStream) {
+        microphoneStream.getTracks().forEach((track) => track.stop());
+      }
       // Clean up global reference
       delete (window as any).__audioPermissionProvider;
     };
@@ -188,6 +234,8 @@ export const AudioPermissionProvider: React.FC<
     hasPermission,
     requestPermission,
     isInitialized,
+    hasMicrophonePermission,
+    requestMicrophonePermission,
   };
 
   return (
@@ -209,23 +257,26 @@ export const AudioPermissionProvider: React.FC<
               <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                 <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                 <div className="text-sm text-blue-800">
-                  <p className="font-medium mb-1">Audio Permission Required</p>
+                  <p className="font-medium mb-1">
+                    Audio & Microphone Permission Required
+                  </p>
                   <p>
-                    To play pronunciation audio and practice dialogues, we need
-                    your permission to enable audio playback.
+                    To play pronunciation audio, practice dialogues, and record
+                    your voice, we need your permission to enable audio playback
+                    and microphone access.
                   </p>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground">
                 This is required due to browser security policies. Click "Enable
-                Audio" to continue with audio features.
+                Audio & Microphone" to continue with all interactive features.
               </p>
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 mt-4">
             <Button onClick={handleGrantPermission} className="w-full">
               <Volume2 className="h-4 w-4 mr-2" />
-              Enable Audio
+              Enable Audio & Microphone
             </Button>
             <Button
               variant="outline"
