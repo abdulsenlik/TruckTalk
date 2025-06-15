@@ -1,6 +1,23 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Globe, Menu, X, ChevronRight, CheckCircle2, Star } from "lucide-react";
+import {
+  Globe,
+  Menu,
+  X,
+  ChevronRight,
+  CheckCircle2,
+  Star,
+  Clock,
+  Calendar,
+  Award,
+  BookOpen,
+  Users,
+  Zap,
+  Target,
+  TrendingUp,
+  Shield,
+  Briefcase,
+} from "lucide-react";
 import CheckoutButton from "./CheckoutButton";
 import StaticAudioTest from "./StaticAudioTest";
 import { useToast } from "@/components/ui/use-toast";
@@ -16,10 +33,12 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
 import ModuleCard from "./ModuleCard";
 import LanguageSelector, { useLanguage } from "./LanguageSelector";
 import UserAuthButton from "./UserAuthButton";
 import { audioService } from "@/lib/audioService";
+import AudioButton from "./AudioButton";
 
 import { trafficStopCourse } from "@/data/trafficStopCourse";
 
@@ -117,6 +136,7 @@ function getEmergencyPhraseImage(phrase: string): string {
 
 const Home = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [bootcampModalOpen, setBootcampModalOpen] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { language, t } = useLanguage();
@@ -248,6 +268,96 @@ const Home = () => {
           </div>
         </section>
 
+        {/* Featured 10-Hour English Bootcamp */}
+        <section className="relative overflow-hidden">
+          <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-2xl border border-blue-100 shadow-lg">
+            <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-indigo-500/5 to-purple-500/5"></div>
+            <div className="relative p-6 md:p-8 lg:p-10">
+              <div className="flex flex-col lg:flex-row items-center gap-8">
+                {/* Content */}
+                <div className="flex-1 text-center lg:text-left">
+                  <div className="flex items-center justify-center lg:justify-start gap-2 mb-4">
+                    <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                      <Zap className="h-5 w-5 text-white" />
+                    </div>
+                    <Badge className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0">
+                      Featured Course
+                    </Badge>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-4 bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+                    10-Hour English Bootcamp
+                  </h2>
+                  <p className="text-lg text-muted-foreground mb-6 max-w-2xl">
+                    Master essential English communication skills for truck
+                    drivers with our comprehensive 5-day intensive program.
+                    Build confidence in traffic stops, border crossings, and
+                    professional interactions.
+                  </p>
+
+                  {/* Features */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">10 Hours Total</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">5 Daily Modules</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Award className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">Certificate Included</span>
+                    </div>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+                    <Button
+                      size="lg"
+                      className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg hover:shadow-xl transition-all duration-200"
+                      asChild
+                    >
+                      <Link to="/bootcamp">
+                        <BookOpen className="mr-2 h-5 w-5" />
+                        Start Bootcamp
+                      </Link>
+                    </Button>
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="border-blue-200 hover:bg-blue-50"
+                      onClick={() => setBootcampModalOpen(true)}
+                    >
+                      Learn More
+                      <ChevronRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Visual Element */}
+                <div className="flex-shrink-0">
+                  <div className="relative">
+                    <div className="w-64 h-64 md:w-80 md:h-80 rounded-2xl overflow-hidden shadow-2xl">
+                      <img
+                        src="https://images.unsplash.com/photo-1601584115197-04ecc0da31d7?w=600&q=80"
+                        alt="Truck driver learning English"
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    {/* Floating elements */}
+                    <div className="absolute -top-4 -right-4 bg-white rounded-full p-3 shadow-lg">
+                      <Users className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="absolute -bottom-4 -left-4 bg-white rounded-full p-3 shadow-lg">
+                      <Award className="h-6 w-6 text-indigo-600" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Module Selection */}
         <section className="space-y-6">
           <div className="flex justify-between items-center">
@@ -322,50 +432,14 @@ const Home = () => {
                             }
                           </p>
                         </div>
-                        <Button
+                        <AudioButton
+                          text={item.phrase}
+                          identifier={`emergency-${index}`}
                           size="sm"
                           variant="ghost"
+                          showText
                           className="flex items-center gap-2"
-                          onClick={async () => {
-                            try {
-                              console.log(
-                                "[Home] Playing audio for emergency phrase:",
-                                item.phrase,
-                              );
-
-                              await audioService.playText(
-                                item.phrase,
-                                `emergency-${index}`,
-                              );
-                              console.log("[Home] Audio played successfully");
-                            } catch (error) {
-                              console.error("[Home] Audio Error:", error);
-                              toast({
-                                title: "Audio Error",
-                                description:
-                                  "Failed to play audio. Please try again.",
-                                variant: "destructive",
-                              });
-                            }
-                          }}
-                          aria-label="Play audio"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            className="h-4 w-4"
-                          >
-                            <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
-                            <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                            <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-                          </svg>
-                          <span className="hidden sm:inline">Play Audio</span>
-                        </Button>
+                        />
                       </div>
                     </div>
                   </CardContent>
@@ -471,6 +545,255 @@ const Home = () => {
           </div>
         </div>
       </footer>
+
+      {/* Bootcamp Learn More Modal */}
+      <Dialog open={bootcampModalOpen} onOpenChange={setBootcampModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-700 to-indigo-700 bg-clip-text text-transparent">
+              Transform Your Trucking Career with English Mastery
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-6">
+            {/* Hero Section */}
+            <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border border-blue-100">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg">
+                  <Target className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-xl font-semibold">
+                  Why This Bootcamp Will Change Everything
+                </h3>
+              </div>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Imagine confidently handling any traffic stop, smoothly
+                navigating border crossings, and communicating professionally
+                with customers. This isn't just language learning—it's career
+                transformation that puts you in control of every interaction on
+                the road.
+              </p>
+            </div>
+
+            {/* Transformation Benefits */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-green-600" />
+                  Career Advancement
+                </h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span>
+                      Qualify for higher-paying routes requiring English
+                      proficiency
+                    </span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span>Access international driving opportunities</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                    <span>Stand out to premium trucking companies</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="text-lg font-semibold flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  Peace of Mind
+                </h4>
+                <ul className="space-y-2 text-sm">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span>Handle police stops with confidence and clarity</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span>Navigate emergencies without language barriers</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <span>Reduce stress from miscommunication</span>
+                  </li>
+                </ul>
+              </div>
+            </div>
+
+            {/* What Makes This Different */}
+            <div className="bg-amber-50 rounded-lg p-6 border border-amber-200">
+              <h4 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <Briefcase className="h-5 w-5 text-amber-600" />
+                What Makes This Bootcamp Different?
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h5 className="font-medium mb-2">Real-World Scenarios</h5>
+                  <p className="text-sm text-muted-foreground">
+                    Practice actual conversations you'll have on the road—not
+                    generic language lessons.
+                  </p>
+                </div>
+                <div>
+                  <h5 className="font-medium mb-2">
+                    Industry-Specific Vocabulary
+                  </h5>
+                  <p className="text-sm text-muted-foreground">
+                    Master the exact terms and phrases used in trucking,
+                    logistics, and transportation.
+                  </p>
+                </div>
+                <div>
+                  <h5 className="font-medium mb-2">Confidence Building</h5>
+                  <p className="text-sm text-muted-foreground">
+                    Interactive roleplay prepares you for high-pressure
+                    situations.
+                  </p>
+                </div>
+                <div>
+                  <h5 className="font-medium mb-2">Immediate Results</h5>
+                  <p className="text-sm text-muted-foreground">
+                    Start using what you learn from day one—see improvement in
+                    every interaction.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Success Stories Preview */}
+            <div className="bg-green-50 rounded-lg p-6 border border-green-200">
+              <h4 className="text-lg font-semibold mb-4 text-green-800">
+                Join Thousands of Successful Drivers
+              </h4>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-green-700">95%</div>
+                  <div className="text-sm text-green-600">
+                    Report increased confidence
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-700">87%</div>
+                  <div className="text-sm text-green-600">
+                    Found better job opportunities
+                  </div>
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-green-700">92%</div>
+                  <div className="text-sm text-green-600">
+                    Recommend to other drivers
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Course Structure */}
+            <div className="space-y-4">
+              <h4 className="text-lg font-semibold">
+                Your 5-Day Transformation Journey
+              </h4>
+              <div className="space-y-3">
+                <div className="flex items-center gap-3 p-3 bg-blue-50 rounded-lg">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    1
+                  </div>
+                  <div>
+                    <div className="font-medium">Foundation & Vocabulary</div>
+                    <div className="text-sm text-muted-foreground">
+                      Master essential trucking terms and documentation
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg">
+                  <div className="w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    2
+                  </div>
+                  <div>
+                    <div className="font-medium">
+                      Navigation & Communication
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Confident directions and dispatcher interactions
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg">
+                  <div className="w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    3
+                  </div>
+                  <div>
+                    <div className="font-medium">
+                      Police & Emergency Situations
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Handle inspections and emergencies professionally
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-pink-50 rounded-lg">
+                  <div className="w-8 h-8 bg-pink-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    4
+                  </div>
+                  <div>
+                    <div className="font-medium">
+                      Customer & Border Interactions
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      Professional delivery and crossing procedures
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 p-3 bg-green-50 rounded-lg">
+                  <div className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                    5
+                  </div>
+                  <div>
+                    <div className="font-medium">Certification & Mastery</div>
+                    <div className="text-sm text-muted-foreground">
+                      CDL test prep and comprehensive review
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Call to Action */}
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg p-6 text-center">
+              <h4 className="text-xl font-bold mb-2">
+                Ready to Transform Your Career?
+              </h4>
+              <p className="mb-4 opacity-90">
+                Join the bootcamp that's already helped thousands of drivers
+                succeed.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-600 hover:bg-gray-100"
+                  onClick={() => {
+                    setBootcampModalOpen(false);
+                    navigate("/bootcamp");
+                  }}
+                >
+                  <BookOpen className="mr-2 h-5 w-5" />
+                  Start Your Transformation Now
+                </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10"
+                  onClick={() => setBootcampModalOpen(false)}
+                >
+                  I'll Think About It
+                </Button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
