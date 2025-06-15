@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Volume2, RefreshCw, Check } from "lucide-react";
-import { audioService } from "@/lib/audioService";
+import { Check } from "lucide-react";
 import { useLanguage } from "./LanguageSelector";
 import AudioButton from "./AudioButton";
 
@@ -57,22 +56,15 @@ const VocabularyCard = ({
             <div>
               <div className="flex justify-between items-center mb-2">
                 <h3 className="font-bold text-lg">{word}</h3>
-                <Button
+                <AudioButton
+                  text={word}
+                  className="h-8 w-8 p-0"
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    playAudio();
                   }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
-                </Button>
+                />
               </div>
 
               <p className="text-sm text-muted-foreground">
@@ -109,22 +101,15 @@ const VocabularyCard = ({
                 <h3 className="font-bold text-lg text-primary">
                   {currentTranslation}
                 </h3>
-                <Button
+                <AudioButton
+                  text={word}
+                  className="h-8 w-8 p-0"
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0"
                   onClick={(e) => {
                     e.stopPropagation();
-                    playAudio();
                   }}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <RefreshCw className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Volume2 className="h-4 w-4" />
-                  )}
-                </Button>
+                />
               </div>
               <p className="text-sm font-medium mb-2">{word}</p>
               <p className="text-sm text-muted-foreground mb-2">{definition}</p>
