@@ -6,6 +6,10 @@ interface AudioContextData {
   ready: boolean;
 }
 
+// Import the hardcoded values from supabase.ts
+const SUPABASE_URL = "https://pvstwthufbertinmojuk.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2c3R3dGh1ZmJlcnRpbm1vanVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwOTI2NDQsImV4cCI6MjA2MjY2ODY0NH0.PG7BJeWuYe-piU_JatbBfauK-I3d9sVh-2fJypAZHS8";
+
 class AudioService {
   private audioContexts: Record<string, AudioContextData> = {};
   private webAudioContext: AudioContext | null = null;
@@ -112,12 +116,12 @@ class AudioService {
 
     // ─── 1. Fetch binary audio from your Edge Function ───
     const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
+      `${SUPABASE_URL}/functions/v1/text-to-speech`,
       {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          apikey: import.meta.env.VITE_SUPABASE_ANON_KEY,
+          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
         },
         body: JSON.stringify({ text }),
       },
