@@ -227,8 +227,8 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
         body: {
           transcript,
           context: {
-            currentExchangeIndex,
-            conversationHistory: conversation,
+          currentExchangeIndex,
+          conversationHistory: conversation,
           },
         },
       });
@@ -262,26 +262,26 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
       // Check for both possible property names for backward compatibility
       const audioUrl = data.ttsAudioUrl || data.audioUrl;
       if (audioUrl) {
-        try {
+      try {
           const audio = new Audio(audioUrl);
-          audio.preload = "auto";
-          audio.setAttribute("playsinline", "true");
-          await audio.play();
-          console.log("[RoleplayDialogue] Officer audio played successfully");
-        } catch (audioError) {
-          console.error(
-            "[RoleplayDialogue] Error playing officer audio:",
-            audioError,
+        audio.preload = "auto";
+        audio.setAttribute("playsinline", "true");
+        await audio.play();
+        console.log("[RoleplayDialogue] Officer audio played successfully");
+      } catch (audioError) {
+        console.error(
+          "[RoleplayDialogue] Error playing officer audio:",
+          audioError,
+        );
+        // Fallback to text-to-speech if direct audio fails
+        try {
+          await audioService.playText(
+            data.replyText,
+            `officer-api-${Date.now()}`,
           );
-          // Fallback to text-to-speech if direct audio fails
-          try {
-            await audioService.playText(
-              data.replyText,
-              `officer-api-${Date.now()}`,
-            );
-          } catch (ttsError) {
-            console.error(
-              "[RoleplayDialogue] TTS fallback also failed:",
+        } catch (ttsError) {
+          console.error(
+            "[RoleplayDialogue] TTS fallback also failed:",
               ttsError,
             );
           }
