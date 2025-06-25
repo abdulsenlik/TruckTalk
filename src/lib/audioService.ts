@@ -162,17 +162,39 @@ class AudioService {
 
     try {
       // ─── 1. Fetch binary audio from Edge Function with retry logic ───
-      const res = await this.fetchWithRetry(
-        `${SUPABASE_URL}/functions/v1/text-to-speech`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-          },
-          body: JSON.stringify({ text }),
+      let res: Response;
+      
+      // Try with Authorization header first
+      try {
+        res = await this.fetchWithRetry(
+          `${SUPABASE_URL}/functions/v1/text-to-speech`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+            },
+            body: JSON.stringify({ text }),
+          }
+        );
+      } catch (authError: any) {
+        // If we get a 401, try without Authorization header (for --no-verify-jwt functions)
+        if (authError.message?.includes("401") || authError.message?.includes("Unauthorized")) {
+          console.log(`[AudioService] Retrying without Authorization header...`);
+          res = await this.fetchWithRetry(
+            `${SUPABASE_URL}/functions/v1/text-to-speech`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ text }),
+            }
+          );
+        } else {
+          throw authError;
         }
-      );
+      }
 
       if (!res.ok) {
         const errMsg = await res.text();
