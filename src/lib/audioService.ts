@@ -24,6 +24,53 @@ class AudioService {
     }
   }
 
+  // Helper method for retrying requests with exponential backoff
+  private async fetchWithRetry(
+    url: string,
+    options: RequestInit,
+    maxRetries: number = 3
+  ): Promise<Response> {
+    let lastError: Error;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+      try {
+        console.log(`[AudioService] Fetch attempt ${attempt + 1}/${maxRetries + 1} for ${url}`);
+        
+        const response = await fetch(url, options);
+        
+        // If we get a 503 (Service Unavailable), retry
+        if (response.status === 503 && attempt < maxRetries) {
+          const waitTime = Math.min(1000 * Math.pow(2, attempt), 5000); // Exponential backoff, max 5s
+          console.warn(`[AudioService] Got 503 on attempt ${attempt + 1}, retrying in ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        // If we get a 504 (Gateway Timeout), also retry
+        if (response.status === 504 && attempt < maxRetries) {
+          const waitTime = Math.min(2000 * Math.pow(2, attempt), 8000); // Longer wait for timeouts
+          console.warn(`[AudioService] Got 504 on attempt ${attempt + 1}, retrying in ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+        
+        return response;
+      } catch (error: any) {
+        lastError = error;
+        console.warn(`[AudioService] Fetch attempt ${attempt + 1} failed:`, error.message);
+        
+        if (attempt < maxRetries) {
+          const waitTime = Math.min(1000 * Math.pow(2, attempt), 5000);
+          console.log(`[AudioService] Retrying in ${waitTime}ms...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
+      }
+    }
+    
+    throw lastError!;
+  }
+
   // Initialize Web Audio API context with user gesture
   private async initializeWebAudioContext(): Promise<boolean> {
     if (this.webAudioContext && this.webAudioContext.state !== "closed") {
@@ -100,8 +147,7 @@ class AudioService {
     return await this.initializeWebAudioContext();
   }
 
-  // Replace your existing prepareAudio method in src/lib/audioService.ts with this:
-
+  // Enhanced prepareAudio method with retry logic and better error handling
   private async prepareAudio(
     text: string,
     identifier: string,
@@ -114,86 +160,102 @@ class AudioService {
       `[AudioService] Preparing audio for: "${text}" (${identifier})`,
     );
 
-    // ─── 1. Fetch binary audio from your Edge Function ───
-    const res = await fetch(
-      `${SUPABASE_URL}/functions/v1/text-to-speech`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: JSON.stringify({ text }),
-      },
-    );
-
-    if (!res.ok) {
-      const errMsg = await res.text();
-      console.error(
-        `[AudioService] Edge Function error ${res.status}:`,
-        errMsg,
+    try {
+      // ─── 1. Fetch binary audio from Edge Function with retry logic ───
+      const res = await this.fetchWithRetry(
+        `${SUPABASE_URL}/functions/v1/text-to-speech`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: JSON.stringify({ text }),
+        }
       );
-      throw new Error(`Edge Function returned ${res.status}`);
+
+      if (!res.ok) {
+        const errMsg = await res.text();
+        console.error(
+          `[AudioService] Edge Function error ${res.status}:`,
+          errMsg,
+        );
+        throw new Error(`Edge Function returned ${res.status}: ${errMsg}`);
+      }
+
+      const arrayBuffer = await res.arrayBuffer();
+      console.log(
+        `[AudioService] Audio data size: ${arrayBuffer.byteLength} bytes`,
+      );
+
+      if (arrayBuffer.byteLength === 0) {
+        throw new Error("Received empty audio data from TTS service");
+      }
+
+      // ─── 2. Turn it into a Blob + URL ───
+      const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio();
+      audio.src = url;
+      audio.preload = "auto";
+      audio.setAttribute("playsinline", "true");
+      audio.crossOrigin = "anonymous";
+      audio.volume = 1.0;
+      audio.muted = false;
+      audio.controls = false;
+      audio.autoplay = false;
+
+      // ─── 3. Wait for canplaythrough with timeout ───
+      const context: AudioContextData = { audio, url, ready: false };
+      this.audioContexts[identifier] = context;
+
+      await new Promise<void>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error("Timeout: Audio loading took too long."));
+        }, 15_000); // Increased timeout to 15 seconds
+
+        audio.addEventListener(
+          "canplaythrough",
+          () => {
+            clearTimeout(timeout);
+            context.ready = true;
+            console.log(`[AudioService] Audio ready for: ${identifier}`, {
+              duration: audio.duration,
+              readyState: audio.readyState,
+            });
+            resolve();
+          },
+          { once: true },
+        );
+
+        audio.addEventListener(
+          "error",
+          (e) => {
+            clearTimeout(timeout);
+            console.error(`[AudioService] Audio element error for ${identifier}:`, e);
+            reject(new Error(`Error loading audio element: ${audio.error?.message || 'Unknown error'}`));
+          },
+          { once: true },
+        );
+
+        audio.load();
+      });
+
+      return context;
+    } catch (error: any) {
+      console.error(`[AudioService] Failed to prepare audio for "${text}":`, error);
+      
+      // Clean up any partially created context
+      if (this.audioContexts[identifier]) {
+        const context = this.audioContexts[identifier];
+        if (context.url) {
+          URL.revokeObjectURL(context.url);
+        }
+        delete this.audioContexts[identifier];
+      }
+      
+      throw error;
     }
-
-    const arrayBuffer = await res.arrayBuffer();
-    console.log(
-      `[AudioService] Audio data size: ${arrayBuffer.byteLength} bytes`,
-    );
-
-    if (arrayBuffer.byteLength === 0) {
-      throw new Error("Received empty audio data from TTS service");
-    }
-
-    // ─── 2. Turn it into a Blob + URL ───
-    const blob = new Blob([arrayBuffer], { type: "audio/mpeg" });
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio();
-    audio.src = url;
-    audio.preload = "auto";
-    audio.setAttribute("playsinline", "true");
-    audio.crossOrigin = "anonymous";
-    audio.volume = 1.0;
-    audio.muted = false;
-    audio.controls = false;
-    audio.autoplay = false;
-
-    // ─── 3. Wait for canplaythrough ───
-    const context: AudioContextData = { audio, url, ready: false };
-    this.audioContexts[identifier] = context;
-
-    await new Promise<void>((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error("Timeout: Audio loading took too long."));
-      }, 10_000);
-
-      audio.addEventListener(
-        "canplaythrough",
-        () => {
-          clearTimeout(timeout);
-          context.ready = true;
-          console.log(`[AudioService] Audio ready for: ${identifier}`, {
-            duration: audio.duration,
-            readyState: audio.readyState,
-          });
-          resolve();
-        },
-        { once: true },
-      );
-
-      audio.addEventListener(
-        "error",
-        (e) => {
-          clearTimeout(timeout);
-          reject(new Error("Error loading audio element"));
-        },
-        { once: true },
-      );
-
-      audio.load();
-    });
-
-    return context;
   }
 
   async playText(text: string, identifier: string = "default"): Promise<void> {
@@ -287,7 +349,7 @@ class AudioService {
     } catch (err: any) {
       console.error("[AudioService] Playback error:", err);
 
-      // Enhanced error reporting
+      // Enhanced error reporting with user-friendly messages
       if (err.name === "NotAllowedError") {
         console.error(
           "[AudioService] Audio blocked by browser policy - user interaction required",
@@ -301,6 +363,10 @@ class AudioService {
       } else if (err.name === "AbortError") {
         console.error("[AudioService] Audio playback was aborted");
         throw new Error("Audio playback was interrupted");
+      } else if (err.message?.includes("503") || err.message?.includes("Service Unavailable")) {
+        throw new Error("Audio service temporarily unavailable - please try again");
+      } else if (err.message?.includes("504") || err.message?.includes("Gateway Timeout")) {
+        throw new Error("Audio service timed out - please try again");
       } else {
         throw new Error(
           "Failed to play audio: " + (err.message || "Unknown error"),
