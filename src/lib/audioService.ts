@@ -6,9 +6,9 @@ interface AudioContextData {
   ready: boolean;
 }
 
-// Import the hardcoded values from supabase.ts
-const SUPABASE_URL = "https://pvstwthufbertinmojuk.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2c3R3dGh1ZmJlcnRpbm1vanVrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDcwOTI2NDQsImV4cCI6MjA2MjY2ODY0NH0.PG7BJeWuYe-piU_JatbBfauK-I3d9sVh-2fJypAZHS8";
+// Use environment variables instead of hardcoded values
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || "https://pvstwthufbertinmojuk.supabase.co";
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...";
 
 class AudioService {
   private audioContexts: Record<string, AudioContextData> = {};
