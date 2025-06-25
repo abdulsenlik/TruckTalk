@@ -14,7 +14,7 @@ export function useTTS() {
 
     try {
       const { data, error } = await supabase.functions.invoke(
-        "supabase-functions-text-to-speech",
+        "text-to-speech",
         {
           body: { text },
         },

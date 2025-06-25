@@ -112,7 +112,7 @@ class AudioService {
 
     // ─── 1. Fetch binary audio from your Edge Function ───
     const res = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/supabase-functions-text-to-speech`,
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/text-to-speech`,
       {
         method: "POST",
         headers: {

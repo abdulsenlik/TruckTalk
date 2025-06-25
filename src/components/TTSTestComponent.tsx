@@ -104,7 +104,7 @@ export default function TTSTestComponent() {
     console.log("[TTS Test] Testing Supabase client invoke...");
     try {
       const { data, error } = await supabase.functions.invoke(
-        "supabase-functions-text-to-speech",
+        "text-to-speech",
         { body: { text: testText } },
       );
 
@@ -314,7 +314,7 @@ export default function TTSTestComponent() {
             {import.meta.env.VITE_SUPABASE_ANON_KEY ? "Yes" : "No"}
           </li>
           <li>
-            <strong>Function Name:</strong> supabase-functions-text-to-speech
+            <strong>Function Name:</strong> text-to-speech
           </li>
           <li>
             <strong>Expected Content-Type:</strong> audio/mpeg

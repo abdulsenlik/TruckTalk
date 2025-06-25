@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { audioService } from "@/lib/audioService";
+import { supabase } from "@/lib/supabase";
 import {
   Play,
   Pause,
@@ -221,32 +222,24 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
     setApiError(null);
 
     try {
-      const formData = new FormData();
-      formData.append("audio", audioBlob, "recording.webm");
-      formData.append("transcript", transcript);
-      formData.append(
-        "context",
-        JSON.stringify({
-          currentExchangeIndex,
-          conversationHistory: conversation,
-        }),
-      );
-
-      const response = await fetch("/api/roleplay-response", {
-        method: "POST",
-        body: formData,
+      // Call the Supabase function
+      const { data, error } = await supabase.functions.invoke("roleplay-response", {
+        body: {
+          transcript,
+          context: {
+            currentExchangeIndex,
+            conversationHistory: conversation,
+          },
+        },
       });
 
-      if (!response.ok) {
-        throw new Error(
-          `API request failed: ${response.status} ${response.statusText}`,
-        );
+      if (error) {
+        throw new Error(`API request failed: ${error.message}`);
       }
 
-      const data = await response.json();
       console.log("[RoleplayDialogue] API response:", data);
 
-      if (!data.replyText || !data.ttsAudioUrl) {
+      if (!data.replyText) {
         throw new Error("Invalid API response format");
       }
 
@@ -266,18 +259,35 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
       setCurrentExchangeIndex(currentExchangeIndex + 1);
 
       // Play the officer's audio response
-      try {
-        const audio = new Audio(data.ttsAudioUrl);
-        audio.preload = "auto";
-        audio.setAttribute("playsinline", "true");
-        await audio.play();
-        console.log("[RoleplayDialogue] Officer audio played successfully");
-      } catch (audioError) {
-        console.error(
-          "[RoleplayDialogue] Error playing officer audio:",
-          audioError,
-        );
-        // Fallback to text-to-speech if direct audio fails
+      // Check for both possible property names for backward compatibility
+      const audioUrl = data.ttsAudioUrl || data.audioUrl;
+      if (audioUrl) {
+        try {
+          const audio = new Audio(audioUrl);
+          audio.preload = "auto";
+          audio.setAttribute("playsinline", "true");
+          await audio.play();
+          console.log("[RoleplayDialogue] Officer audio played successfully");
+        } catch (audioError) {
+          console.error(
+            "[RoleplayDialogue] Error playing officer audio:",
+            audioError,
+          );
+          // Fallback to text-to-speech if direct audio fails
+          try {
+            await audioService.playText(
+              data.replyText,
+              `officer-api-${Date.now()}`,
+            );
+          } catch (ttsError) {
+            console.error(
+              "[RoleplayDialogue] TTS fallback also failed:",
+              ttsError,
+            );
+          }
+        }
+      } else {
+        // No audio URL provided, use local TTS
         try {
           await audioService.playText(
             data.replyText,
@@ -285,7 +295,7 @@ const RoleplayDialogue: React.FC<RoleplayDialogueProps> = ({
           );
         } catch (ttsError) {
           console.error(
-            "[RoleplayDialogue] TTS fallback also failed:",
+            "[RoleplayDialogue] TTS failed:",
             ttsError,
           );
         }

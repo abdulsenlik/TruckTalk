@@ -445,7 +445,7 @@ export default function AudioDebugPanel() {
                 <strong>Function Name:</strong>
                 <br />
                 <code className="text-xs bg-gray-100 p-1 rounded">
-                  supabase-functions-text-to-speech
+                  text-to-speech
                 </code>
               </div>
               <div>
