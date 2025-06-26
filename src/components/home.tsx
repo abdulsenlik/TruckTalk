@@ -174,6 +174,9 @@ const Home = () => {
             >
               {t("nav.emergency")}
             </Link>
+            <Link to="/blog" className="text-sm font-medium hover:text-primary">
+              Blog
+            </Link>
             <Link
               to="/pricing"
               className="text-sm font-medium hover:text-primary"
@@ -230,6 +233,9 @@ const Home = () => {
               className="text-sm font-medium hover:text-primary"
             >
               {t("nav.emergency")}
+            </Link>
+            <Link to="/blog" className="text-sm font-medium hover:text-primary">
+              Blog
             </Link>
             <Link
               to="/pricing"
@@ -496,6 +502,14 @@ const Home = () => {
                     className="text-muted-foreground hover:text-foreground"
                   >
                     {t("nav.emergency")}
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/blog"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    Blog
                   </Link>
                 </li>
               </ul>

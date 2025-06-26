@@ -1,5 +1,6 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { useRoutes, Routes, Route, useNavigate } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import Home from "./components/home";
 import { Toaster } from "./components/ui/toaster";
 import { supabase } from "./lib/supabase";
@@ -22,6 +23,8 @@ const PricingPage = lazy(() => import("./pages/pricing"));
 const LandingPage = lazy(() => import("./pages/landing"));
 const BootcampPage = lazy(() => import("./pages/bootcamp"));
 const BootcampModulePage = lazy(() => import("./pages/bootcamp/module/[id]"));
+const BlogListPage = lazy(() => import("./pages/blog/index"));
+const BlogPostPage = lazy(() => import("./pages/blog/[slug]"));
 
 // Inner App component that uses subscription context
 function AppContent() {
@@ -75,6 +78,8 @@ function AppContent() {
               path="/bootcamp/module/:id"
               element={<BootcampModulePage />}
             />
+            <Route path="/blog" element={<BlogListPage />} />
+            <Route path="/blog/:slug" element={<BlogPostPage />} />
           </Routes>
           <Toaster />
         </>
@@ -92,15 +97,17 @@ function AppContent() {
 
 function App() {
   return (
-    <ErrorBoundary>
-      <LanguageProvider>
-        <AudioPermissionProvider>
-          <SubscriptionProvider>
-            <AppContent />
-          </SubscriptionProvider>
-        </AudioPermissionProvider>
-      </LanguageProvider>
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <LanguageProvider>
+          <AudioPermissionProvider>
+            <SubscriptionProvider>
+              <AppContent />
+            </SubscriptionProvider>
+          </AudioPermissionProvider>
+        </LanguageProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 }
 
